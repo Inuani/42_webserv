@@ -88,7 +88,7 @@ int main() {
             // std::cout << request << std::endl;
 
             char buffer[30000] = {0};
-            long valread = read(clientSockFd, buffer, 30000);
+            read(clientSockFd, buffer, 30000);
             // std::cout << buffer << std::endl;
             HttpRequest hReq(buffer);
 

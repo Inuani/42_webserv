@@ -12,7 +12,10 @@ NAME		= webserv
 
 # FOLDERS & FILES
 SRC_DIR		= ./srcs/
-SRC_FILES	= main.cpp
+SRC_FILES	=	main.cpp \
+				HttpRequest.cpp \
+				HttpResponse.cpp \
+				utils.cpp
 
 OBJ_DIR		= ./objs/
 OBJ_FILES	= ${SRC_FILES:.cpp=.o}
@@ -22,7 +25,7 @@ OBJ			= ${addprefix ${OBJ_DIR}, ${OBJ_FILES}}
 
 # FLAGS
 CC			= c++
-CFLAGS		= -Wall -Wextra -Werror
+CFLAGS		= #-Wall -Wextra -Werror
 CPP_FLAGS	= -std=c++98 -pedantic
 
 # COMMANDS
