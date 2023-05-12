@@ -1,0 +1,29 @@
+{
+	"routes": [
+	  {
+		"path": "/",
+		"methods": ["GET"]
+	  },
+	  {
+		"path": "/put_test/*",
+		"methods": ["PUT"],
+		"directory": "/path/to/save/files"
+	  },
+	  {
+		"path": "*.bla",
+		"methods": ["POST"],
+		"executable": "cgi_test"
+	  },
+	  {
+		"path": "/post_body",
+		"methods": ["POST"],
+		"maxBody": 100
+	  },
+	  {
+		"path": "/directory/",
+		"methods": ["GET"],
+		"root": "YoupiBanane",
+		"defaultFile": "youpi.bad_extension"
+	  }
+	]
+}
