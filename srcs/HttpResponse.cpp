@@ -7,8 +7,8 @@ HttpResponse::HttpResponse(int status, const std::string& body, const std::strin
 
 HttpResponse::~HttpResponse() {}
 
-const std::string&	HttpResponse::toString() const {
-	std::string response;
+std::string	HttpResponse::toString() const {
+	std::string	response;
 	response += "HTTP/1.1 " + std::to_string(_status) + " " + getStatusMessage(_status) + "\r\n";
 	response += "Content-Type: " + _contentType + "\r\n";
 	response += "Content-Length: " + std::to_string(_body.size()) + "\r\n";

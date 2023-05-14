@@ -10,7 +10,7 @@ public:
 	HttpResponse(int status, const std::string& body, const std::string& contentType);
 	~HttpResponse();
 
-	const std::string&	toString() const;
+	std::string	toString() const;
 	const std::string&	getStatusMessage(int status) const;
 
 private:

@@ -75,32 +75,42 @@ int main() {
             // for the listening socket (server_fd) creates a new connected socket,
             // and returns a new file descriptor referring to that socket.
 
-            // DYNAMIC BUFFER NOT WORKING ...
-            // std::string request;
-            // char buffer[1024] = {0};
-            // ssize_t bytesRead = 1;
-            // while (bytesRead > 0) {
-            //     memset(buffer, 0, sizeof(buffer));
-            //     bytesRead = read(clientSockFd, buffer, sizeof(buffer) - 1);
-            //     if (bytesRead > 0)
-            //         request.append(buffer, bytesRead);
-            // }
+            std::string request;
+            char buffer[1024];
+            std::string last4Chars;
+            ssize_t bytesRead;
+
+            while ((bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0) {
+                request.append(buffer, bytesRead);
+    
+                last4Chars.append(buffer, bytesRead);
+                if (last4Chars.size() > 4)
+                last4Chars.erase(0, last4Chars.size() - 4);
+                if (last4Chars == "\r\n\r\n")
+                    break;
+                }
+                
+
+            // char request[30000] = {0};
+            // read(clientSockFd, request, 30000);
+
             // std::cout << request << std::endl;
 
-            char buffer[30000] = {0};
-            read(clientSockFd, buffer, 30000);
-            // std::cout << buffer << std::endl;
-            HttpRequest hReq(buffer);
+            HttpRequest hReq(request);
 
-            // std::string filePath = hReq.getUri();
-            // std::string body = readFileContent(filePath);
+            std::string filePath = hReq.getUri();
+            if (hReq.getUri() == "/")
+                filePath = "srcs/index.html";
+            std::string body = readFileContent(filePath);
 
-            // HttpResponse hRes(200, body, "text/html");
-            // std::string response = hRes.toString();
+            HttpResponse hRes(200, body, "text/html");
+            std::string response = hRes.toString();
+            std::cout << response << std::endl;
 
-            const char *hello = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 12\r\n\r\nHello world!";
-            write(clientSockFd, hello, strlen(hello));
-            std::cout << "------------------Hello message sent-------------------\n";
+            // const char *hello = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello world!";
+            // write(clientSockFd, hello, strlen(hello));
+            write(clientSockFd, response.c_str(), response.size());
+            // std::cout << "------------------Hello message sent-------------------\n";
 
             close(clientSockFd);
         }
