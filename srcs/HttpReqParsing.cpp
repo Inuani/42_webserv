@@ -1,9 +1,9 @@
-#include "HttpRequest.hpp"
+#include "HttpReqParsing.hpp"
 #include <iostream>
 #include <sstream>
 #include <map>
 
-HttpRequest::HttpRequest(const std::string& strHttpRequest) {
+HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 	std::istringstream parseStream(strHttpRequest);
 	std::string line;
 
@@ -11,7 +11,7 @@ HttpRequest::HttpRequest(const std::string& strHttpRequest) {
 	std::istringstream requestStream(line);
 	requestStream >> _method >> _uri >> _version;
 
-	// std::cout << _method << _uri << _version << std::endl;
+	std::cout << _method << _uri << _version << std::endl;
 
 	while (std::getline(parseStream, line) && line != "\r") {
 		std::istringstream headerStream(line);
@@ -21,7 +21,7 @@ HttpRequest::HttpRequest(const std::string& strHttpRequest) {
 		// headerStream.ignore(1); //caution
 		// std::getline(headerStream, value);
 		_headers[key] = value;
-		// std::cout << key << " : " << value <<std::endl;
+		std::cout << key << " : " << value <<std::endl;
 	}
 
 	while (std::getline(parseStream, line)) {
@@ -29,35 +29,35 @@ HttpRequest::HttpRequest(const std::string& strHttpRequest) {
 	}
 }
 
-HttpRequest::~HttpRequest() {}
+HttpReqParsing::~HttpReqParsing() {}
 
-const std::string&	HttpRequest::getMethod() const {
+const std::string&	HttpReqParsing::getMethod() const {
 	return _method;
 }
 
-const std::string&	HttpRequest::getUri() const {
+const std::string&	HttpReqParsing::getUri() const {
 	return _uri;
 }
 
-const std::string&	HttpRequest::getVersion() const {
+const std::string&	HttpReqParsing::getVersion() const {
 	return _version;
 }
 
-const std::map<std::string, std::string>&	HttpRequest::getheaders() const {
+const std::map<std::string, std::string>&	HttpReqParsing::getheaders() const {
 	return _headers;
 }
 
-const std::string&	HttpRequest::getBody() const {
+const std::string&	HttpReqParsing::getBody() const {
 	return _body;
 }
 
-HttpRequest::HttpRequest() {}
+HttpReqParsing::HttpReqParsing() {}
 
-HttpRequest::HttpRequest(const HttpRequest &src) {
+HttpReqParsing::HttpReqParsing(const HttpReqParsing &src) {
 	*this = src;
 }
 
-HttpRequest&	HttpRequest::operator=(const HttpRequest& rhs) {
+HttpReqParsing&	HttpReqParsing::operator=(const HttpReqParsing& rhs) {
 	(void)rhs;
 	return *this;
 }

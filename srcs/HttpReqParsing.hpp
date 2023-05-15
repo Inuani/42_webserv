@@ -1,15 +1,15 @@
 #include <iostream>
 #include <map>
 
-#ifndef HTTPREQUEST_HPP
-# define HTTPREQUEST_HPP
+#ifndef HTTPREQPARSING_HPP
+# define HTTPREQPARSING_HPP
 
-class HttpRequest {
+class HttpReqParsing {
 
 public:
 
-	HttpRequest(const std::string& strHttpRequest);
-	~HttpRequest();
+	HttpReqParsing(const std::string& strHttpRequest);
+	~HttpReqParsing();
 
 	const std::string&	getMethod() const;
 	const std::string&	getUri() const;
@@ -19,9 +19,9 @@ public:
 
 private:
 
-	HttpRequest();
-	HttpRequest(const HttpRequest& src);
-	HttpRequest& operator=(const HttpRequest& rhs);
+	HttpReqParsing();
+	HttpReqParsing(const HttpReqParsing& src);
+	HttpReqParsing& operator=(const HttpReqParsing& rhs);
 
 	std::string							_method;
 	std::string							_uri;

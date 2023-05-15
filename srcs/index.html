@@ -2,11 +2,19 @@
 
 <html>
 	<head>
-		<title> Webserv gaming</title>
+		<title>Webserv gaming</title>
 	</head>
 	<body>
 		<h1>Banana Webserv Gaming</h1>
 	<p>La page s'affiche yes !</p>
 		<!-- <img src="background.jpg" alt="Background image"> -->
+
+		<form action="/submit" method="POST">
+			<label for="name">Name:</label><br>
+			<input type="text" id="name" name="name"><br>
+			<label for="email">Email:</label><br>
+			<input type="text" id="email" name="email"><br>
+			<input type="submit" value="Submit">
+		</form>
 	</body>
 </html>

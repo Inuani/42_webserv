@@ -7,7 +7,7 @@
 #include <sys/time.h>
 #include <netdb.h>
 #include <string.h>
-#include "HttpRequest.hpp"
+#include "HttpReqParsing.hpp"
 #include "HttpResponse.hpp"
 #include "utils.hpp"
 
@@ -18,7 +18,7 @@ int main() {
     int serverFd;
 
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC; 
+    hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // specify that we want to use our own IP address
     
@@ -79,24 +79,21 @@ int main() {
             char buffer[1024];
             std::string last4Chars;
             ssize_t bytesRead;
-
             while ((bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0) {
                 request.append(buffer, bytesRead);
-    
                 last4Chars.append(buffer, bytesRead);
                 if (last4Chars.size() > 4)
                 last4Chars.erase(0, last4Chars.size() - 4);
                 if (last4Chars == "\r\n\r\n")
                     break;
                 }
-                
 
             // char request[30000] = {0};
             // read(clientSockFd, request, 30000);
 
             // std::cout << request << std::endl;
 
-            HttpRequest hReq(request);
+            HttpReqParsing hReq(request);
 
             std::string filePath = hReq.getUri();
             if (hReq.getUri() == "/")
