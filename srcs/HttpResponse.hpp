@@ -10,14 +10,16 @@ public:
 	HttpResponse(int status, const std::string& body, const std::string& contentType);
 	~HttpResponse();
 
-	std::string	toString() const;
+	std::string			toString() const;
 	const std::string&	getStatusMessage(int status) const;
+	void				setLocationHeader(const std::string& location);
 
 private:
 
 	int			_status;
 	std::string	_body;
 	std::string	_contentType;
+	std::string	_location;
 
 	HttpResponse();
 	HttpResponse(const HttpResponse& src);

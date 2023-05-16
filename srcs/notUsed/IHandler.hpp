@@ -1,4 +1,5 @@
 #include <iostream>
+#include "HttpReqParsing.hpp"
 
 #ifndef IHANDLER_HPP
 # define IHANDLER_HPP
@@ -10,7 +11,7 @@ public:
 	IHandler();
 	virtual ~IHandler();
 
-	virtual void handle(const HttpReqParsing& request, ) = 0;
+	virtual void handle(const HttpReqParsing& request) = 0;
 
 private:
 

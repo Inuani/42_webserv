@@ -15,6 +15,7 @@ SRC_DIR		= ./srcs/
 SRC_FILES	=	main.cpp \
 				HttpReqParsing.cpp \
 				HttpResponse.cpp \
+				ReqHandler.cpp \
 				utils.cpp
 
 OBJ_DIR		= ./objs/

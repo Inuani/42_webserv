@@ -10,6 +10,7 @@
 #include "HttpReqParsing.hpp"
 #include "HttpResponse.hpp"
 #include "utils.hpp"
+#include "ReqHandler.hpp"
 
 #define PORT "8080"
 
@@ -30,6 +31,12 @@ int main() {
     // Creating socket file descriptor
     if ((serverFd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == 0) {
         perror("In socket");
+        exit(EXIT_FAILURE);
+    }
+    int bol = 1;
+    if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &bol,
+				sizeof(int)) == -1) {
+        perror("setsockopt Error");
         exit(EXIT_FAILURE);
     }
 
@@ -67,7 +74,7 @@ int main() {
         // It's applying the changes specified in change_list and retrieving any pending events into event.
         if (event.filter == EVFILT_READ) // is the event a read event ?
         {
-            struct sockaddr_storage theirAddr; // generel purpose socket address struct that stock client address
+            struct sockaddr_storage theirAddr; // general purpose socket address struct that stock client address
             // when connected to the server
             socklen_t addr_size = sizeof theirAddr;
             int clientSockFd = accept(serverFd, (struct sockaddr *)&theirAddr, &addr_size);
@@ -95,13 +102,17 @@ int main() {
 
             HttpReqParsing hReq(request);
 
-            std::string filePath = hReq.getUri();
-            if (hReq.getUri() == "/")
-                filePath = "srcs/index.html";
-            std::string body = readFileContent(filePath);
+            // std::string filePath = hReq.getUri();
+            // if (hReq.getUri() == "/")
+            //     filePath = "srcs/index.html";
+            // std::string body = readFileContent(filePath);
 
-            HttpResponse hRes(200, body, "text/html");
-            std::string response = hRes.toString();
+            // HttpResponse hRes(200, body, "text/html");
+            // std::string response = hRes.toString();
+            // std::cout << response << std::endl;
+
+            ReqHandler  reqHandler;
+            std::string response = reqHandler.handleRequest(hReq);
             std::cout << response << std::endl;
 
             // const char *hello = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello world!";

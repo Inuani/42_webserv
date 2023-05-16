@@ -1,15 +1,9 @@
 #include "GetRequestHandler.hpp"
 #include <iostream>
 
-GetRequestHandler::GetRequestHandler()
-{
-}
+GetRequestHandler::GetRequestHandler() {}
 
 GetRequestHandler::~GetRequestHandler() {}
-
-
-
-
 
 GetRequestHandler::GetRequestHandler(const GetRequestHandler &src) {
 	*this = src;

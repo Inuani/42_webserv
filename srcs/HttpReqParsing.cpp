@@ -27,6 +27,8 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 	while (std::getline(parseStream, line)) {
 		_body.append(line + "\n");
 	}
+	std::cout << _body << std::endl;
+
 }
 
 HttpReqParsing::~HttpReqParsing() {}

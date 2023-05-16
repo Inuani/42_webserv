@@ -12,6 +12,8 @@ std::string	HttpResponse::toString() const {
 	response += "HTTP/1.1 " + std::to_string(_status) + " " + getStatusMessage(_status) + "\r\n";
 	response += "Content-Type: " + _contentType + "\r\n";
 	response += "Content-Length: " + std::to_string(_body.size()) + "\r\n";
+	if (!_location.empty())
+		response += "Location: " + _location + "\r\n";
 	response += "\r\n";
 	response += _body;
 	return response;
@@ -20,10 +22,16 @@ std::string	HttpResponse::toString() const {
 const std::string&	HttpResponse::getStatusMessage(int status) const {
 	switch(status) {
 		case 200: return "OK";
+		case 303: return "See Other";
 		case 404: return "Not Found";
 		default: return "Unknown Status";
 	}
 }
+
+void HttpResponse::setLocationHeader(const std::string& location) {
+	_location = location;
+}
+
 
 HttpResponse::HttpResponse() {}
 
