@@ -1,5 +1,5 @@
 .vscode
-/obj/*
+/objs/*
 webserv
 tester
 form_submissions.txt
