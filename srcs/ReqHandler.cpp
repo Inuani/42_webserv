@@ -25,7 +25,7 @@ const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
-	std::cout << "aled\n";
+	// std::cout << "aled\n";
 	std::string formData = request.getBody();
 	std::map<std::string, std::string> formFields;
 	std::istringstream formStream(formData);

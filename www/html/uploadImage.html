@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Upload Image</h2>
+
+<form action="/upload" method="post" enctype="multipart/form-data">
+	<input type="file" id="myFile" name="filename">
+	<input type="submit">
+</form>
+
+<h2>Drag and Drop Image</h2>
+
+<div id="drop_zone" style="width:200px; height:200px; border:1px solid black">
+    Drop image here
+</div>
+
+<script>
+let dropZone = document.getElementById('drop_zone');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    let files = e.dataTransfer.files;
+    // Handle file upload here
+});
+</script>
+
+</body>
+</html>
