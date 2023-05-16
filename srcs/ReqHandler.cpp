@@ -54,8 +54,8 @@ const std::string	ReqHandler::deleteReqHandler(const HttpReqParsing& request) {
 			HttpResponse hRes(500, "Error deleting file", "text/plain");
 			return hRes.toString();
 		}
-		HttpResponse hRes(200, "File deleted successfully", "text/plain");
-		// hRes.setLocationHeader("/success.html");
+		HttpResponse hRes(303, "", "text/html");
+		hRes.setLocationHeader("/success.html");
 		return hRes.toString();
 	}
 	HttpResponse hRes(404, "Error", "text/plain");

@@ -24,15 +24,20 @@
 		<hr class="spaced">
 
 		<button onclick="deleteSubmissions()">Delete submissions</button>
-			<script>
-				function deleteSubmissions() {
+		<script>
+			function deleteSubmissions() {
 				fetch('/delete_submissions', {
-				method: 'DELETE'
+					method: 'DELETE'
 				})
-				.then(response => response.text())
-				.then(data => console.log(data))
+				.then(response => {
+					if (response.ok) {
+						window.location.href = "/delete_success.html";
+					} else {
+						console.error('Delete operation failed');
+					}
+				})
 				.catch(error => console.error(error));
-				}
-			</script>
+			}
+		</script>
 	</body>
 </html>
