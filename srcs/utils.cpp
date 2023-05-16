@@ -5,13 +5,18 @@
 
 std::string readFileContent(const std::string& path) {
 	std::ifstream file(path, std::ios::binary);
-
-	if (!file.is_open()) {
-		std::cerr << "Failed to open file: " << path << '\n';
-	}
+	std::cout << path;
+	std::ifstream error404("www/html/404.html", std::ios::binary);
 	std::ostringstream ss;
-
-	ss << file.rdbuf();
+	if (!file.is_open()) 
+	{
+		std::cerr << "Failed to open file: " << path << '\n';
+		ss << error404.rdbuf();
+		std::cout << "lol\n";
+	}
+	else
+		ss << file.rdbuf();
+	std::cout << "Returning : " << ss.str() << "\n";
 	return ss.str();
 }
 
