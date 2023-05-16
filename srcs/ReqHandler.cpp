@@ -4,6 +4,7 @@
 #include <sstream>
 #include <map>
 #include <fstream>
+#include <stdio.h>
 
 ReqHandler::ReqHandler() {}
 
@@ -47,6 +48,15 @@ const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::deleteReqHandler(const HttpReqParsing& request) {
+	if (request.getUri() == "/delete_submissions") {
+		if (remove("form_submissions.txt") != 0) {
+			HttpResponse hRes(500, "Error deleting file", "text/plain");
+			return hRes.toString();
+		}
+		HttpResponse hRes(200, "File deleted successfully", "text/plain");
+		// hRes.setLocationHeader("/success.html");
+		return hRes.toString();
+	}
 	HttpResponse hRes(404, "Error", "text/plain");
 	return hRes.toString();
 }
