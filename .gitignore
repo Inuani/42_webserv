@@ -1,5 +1,6 @@
 .vscode
 /objs/*
+*deprecated*
 webserv
 tester
 form_submissions.txt
