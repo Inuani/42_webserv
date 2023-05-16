@@ -3,6 +3,12 @@
 <html>
 	<head>
 		<title>Webserv gaming</title>
+		<style>
+			hr.spaced {
+				margin-top: 20px;
+				margin-bottom: 20px;
+			}
+		</style>
 	</head>
 	<body>
 		<h1>Banana Webserv Gaming</h1>
@@ -14,5 +20,19 @@
 			<input type="text" id="email" name="email"><br>
 			<input type="submit" value="Submit">
 		</form>
+
+		<hr class="spaced">
+
+		<button onclick="deleteSubmissions()">Delete submissions</button>
+			<script>
+				function deleteSubmissions() {
+				fetch('/delete_submissions', {
+				method: 'DELETE'
+				})
+				.then(response => response.text())
+				.then(data => console.log(data))
+				.catch(error => console.error(error));
+				}
+			</script>
 	</body>
 </html>

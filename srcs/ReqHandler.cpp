@@ -13,6 +13,8 @@ const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
 		filePath = "srcs/index.html";
 	else if (request.getUri() == "/success.html")
 		filePath = "srcs/success.html";
+	else if (request.getUri() == "/submit")
+		filePath = "srcs/success.html";
 	std::string body = readFileContent(filePath);
 	HttpResponse hRes(200, body, "text/html");
 	std::string response = hRes.toString();
@@ -41,8 +43,12 @@ const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
 	// HttpResponse hRes(200, body, "text/html");
 	HttpResponse hRes(303, "", "text/html");
 	hRes.setLocationHeader("/success.html");
-	std::string response = hRes.toString();
-	return response;
+	return hRes.toString();
+}
+
+const std::string	ReqHandler::deleteReqHandler(const HttpReqParsing& request) {
+	HttpResponse hRes(404, "Error", "text/plain");
+	return hRes.toString();
 }
 
 const std::string	ReqHandler::defaultHandler(const HttpReqParsing& request) {
@@ -56,6 +62,8 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
 		return getReqHandler(request);
 	} else if (request.getMethod() == "POST") {
 		return postReqHandler(request);
+	} else if (request.getMethod() == "DELETE") {
+		return deleteReqHandler(request);
 	} else {
 		return defaultHandler(request);
 	}
