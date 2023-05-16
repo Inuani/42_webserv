@@ -8,21 +8,23 @@
 ReqHandler::ReqHandler() {}
 
 const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
-	std::string filePath = request.getUri();
+	//std::string filePath = request.getUri();
+	std::string filePath = "www/html";
+	std::string defaultFile = "/index.html";
 	if (request.getUri() == "/")
-		filePath = "srcs/index.html";
-	else if (request.getUri() == "/success.html")
-		filePath = "srcs/success.html";
-	else if (request.getUri() == "/submit")
-		filePath = "srcs/success.html";
+		filePath.append(defaultFile);
+	else
+		filePath.append(request.getUri());
+
 	std::string body = readFileContent(filePath);
-	HttpResponse hRes(200, body, "text/html");
+	HttpResponse hRes(200, body, getFileType(filePath));
 	std::string response = hRes.toString();
 	// std::cout << response << std::endl;
 	return response;
 }
 
 const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
+	std::cout << "aled\n";
 	std::string formData = request.getBody();
 	std::map<std::string, std::string> formFields;
 	std::istringstream formStream(formData);
@@ -38,7 +40,6 @@ const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
 	outFile << it->first << ": " << it->second << "\n";
 	}
 	outFile.close();
-
 	// std::string body = readFileContent("srcs/success.html");
 	// HttpResponse hRes(200, body, "text/html");
 	HttpResponse hRes(303, "", "text/html");

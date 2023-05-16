@@ -82,18 +82,19 @@ int main() {
             // for the listening socket (server_fd) creates a new connected socket,
             // and returns a new file descriptor referring to that socket.
 
+            std::cout << "Request received !\n";
             std::string request;
             char buffer[1024];
-            std::string last4Chars;
             ssize_t bytesRead;
             while ((bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0) {
+                std::cout << "<----------------- debug ----------------->\n";
+                std::cout << buffer << std::endl;
+                std::cout << "<----------------- !debug ----------------->\n";
                 request.append(buffer, bytesRead);
-                last4Chars.append(buffer, bytesRead);
-                if (last4Chars.size() > 4)
-                last4Chars.erase(0, last4Chars.size() - 4);
-                if (last4Chars == "\r\n\r\n")
+                if (request.find("\r\n\r\n") != std::string::npos)
                     break;
                 }
+            std::cout << "<----------------- end read ----------------->\n";
 
             // char request[30000] = {0};
             // read(clientSockFd, request, 30000);

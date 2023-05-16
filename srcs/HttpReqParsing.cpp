@@ -11,7 +11,7 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 	std::istringstream requestStream(line);
 	requestStream >> _method >> _uri >> _version;
 
-	std::cout << _method << _uri << _version << std::endl;
+	//std::cout << _method << " " << _uri << " " << _version << std::endl;
 
 	while (std::getline(parseStream, line) && line != "\r") {
 		std::istringstream headerStream(line);
@@ -21,13 +21,13 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 		// headerStream.ignore(1); //caution
 		// std::getline(headerStream, value);
 		_headers[key] = value;
-		std::cout << key << " : " << value <<std::endl;
+		//std::cout << key << " : " << value <<std::endl;
 	}
 
 	while (std::getline(parseStream, line)) {
 		_body.append(line + "\n");
 	}
-	std::cout << _body << std::endl;
+	//std::cout << _body << std::endl;
 
 }
 
