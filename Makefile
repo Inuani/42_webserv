@@ -16,7 +16,9 @@ SRC_FILES	=	main.cpp \
 				HttpReqParsing.cpp \
 				HttpResponse.cpp \
 				ReqHandler.cpp \
-				utils.cpp
+				utils.cpp \
+				Server.cpp \
+
 
 OBJ_DIR		= ./objs/
 OBJ_FILES	= ${SRC_FILES:.cpp=.o}
