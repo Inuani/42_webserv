@@ -24,15 +24,27 @@ std::string getFileType(const std::string& filePath)
 {
 	std::string ext;
 	std::string fileType;
-	ext.insert(0, filePath, filePath.find_last_of("."), std::string::npos);
+	if (filePath.find_last_of(".") == std::string::npos)
+		return ("text/html");
 
+	ext.insert(0, filePath, filePath.find_last_of("."), std::string::npos);
+	
 	if (ext == ".html")
 		fileType = "text/html";
 	else if (ext == ".jpg")
 		fileType = "image/jpeg";
 	else if (ext == ".gif")
 		fileType = "image/gif";
-	//std::cout << "\next is : " << ext << "\n";
-	//std::cout << "\nfile Type is : " << filePath << "\n";
+
 	return (fileType);
+}
+
+int getResponseCode(const std::string& filePath)
+{
+	std::ifstream file(filePath, std::ios::binary);
+	if (!file.is_open())
+	{
+		return 404;
+	}
+	return 200;
 }
