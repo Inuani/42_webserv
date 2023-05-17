@@ -25,7 +25,11 @@ const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
-	// std::cout << "aled\n";
+	std::map<std::string, std::string> headers = request.getheaders();
+	std::string contentType = headers["Content-Type"];
+
+	std::cout << contentType << std::endl;
+
 	std::string formData = request.getBody();
 	std::map<std::string, std::string> formFields;
 	std::istringstream formStream(formData);
@@ -35,14 +39,11 @@ const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
 		std::string value = field.substr(field.find('=') + 1);
 		formFields[key] = value;
 	}
-
 	std::ofstream outFile("form_submissions.txt", std::ios_base::app);
 	for (std::map<std::string, std::string>::const_iterator it = formFields.begin(); it != formFields.end(); ++it) {
-	outFile << it->first << ": " << it->second << "\n";
+		outFile << it->first << ": " << it->second << "\n";
 	}
 	outFile.close();
-	// std::string body = readFileContent("srcs/success.html");
-	// HttpResponse hRes(200, body, "text/html");
 	HttpResponse hRes(303, "", "text/html");
 	hRes.setLocationHeader("/success.html");
 	return hRes.toString();
