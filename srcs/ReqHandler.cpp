@@ -18,7 +18,7 @@ const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
 		filePath.append(request.getUri());
 
 	std::string body = readFileContent(filePath);
-	HttpResponse hRes(200, body, getFileType(filePath));
+	HttpResponse hRes(getResponseCode(filePath), body, getFileType(filePath));
 	std::string response = hRes.toString();
 	// std::cout << response << std::endl;
 	return response;
