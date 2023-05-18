@@ -52,12 +52,8 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 	}
 	else if (contentType.find("multipart/form-data") != std::string::npos) {
 
-		// std::cout << std::endl;
-		// std::cout << "<--------------- here --------------->" << std::endl;
-		std::string boundary = request.getBody().substr(0, 40); //caution
-		// std::string boundary = request.getBody().substr(0, request.getBody().find());
-		// std::cout << "boundary is : " << boundary << std::endl;
-
+		//std::string boundary = request.getBody().substr(0, 40); //caution
+		std::string boundary = contentType.substr(contentType.find("boundary=") + 9, contentType.size() - 10 - contentType.find("boundary="));
 		std::string content = request.getBody().substr(request.getBody().find("\r\n\r\n") + 4, std::string::npos);
 		content.erase(content.find(boundary), std::string::npos);
 
