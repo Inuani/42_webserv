@@ -5,6 +5,7 @@
 #include <map>
 #include <fstream>
 #include <stdio.h>
+#include <unistd.h>
 
 ReqHandler::ReqHandler() {}
 
@@ -103,9 +104,35 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
-	
-	
-	std::string response = "";
+	int fd[2];
+	if (pipe(fd) < 0) {
+		std::cerr << "pipe Error" << std::endl;
+		return "";
+	}
+
+	pid_t	pid = fork();
+	if (pid == 0) {
+		close(fd[0]);
+		dup2(fd[1], STDOUT_FILENO);
+
+		char *args[] = {"./cgi-bin/php-cgi", NULL};
+		char *env[] = {
+			// CGI ENV
+		};
+		execve(args[0], args, env);
+		exit(EXIT_FAILURE);
+	}
+	else if (pid < 0) {
+		std::cerr << "fork Error" << std::endl;
+		return "";
+	}
+	close(fd[1]);
+	char buf[1024];
+	std::string	response;
+	ssize_t n;
+	while (n = read(fd[0], buf, sizeof(buf)) > 0) {
+		response.append(buf, n);
+	}
 	return response;
 }
 
