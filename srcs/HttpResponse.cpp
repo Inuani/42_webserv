@@ -19,7 +19,7 @@ std::string	HttpResponse::toString() const {
 	return response;
 }
 
-const std::string&	HttpResponse::getStatusMessage(int status) const {
+const char*	HttpResponse::getStatusMessage(int status) const {
 	switch(status) {
 		case 200: return "OK";
 		case 303: return "See Other";

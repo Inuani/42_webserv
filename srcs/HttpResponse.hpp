@@ -11,7 +11,7 @@ public:
 	~HttpResponse();
 
 	std::string			toString() const;
-	const std::string&	getStatusMessage(int status) const;
+	const char*	getStatusMessage(int status) const;
 	void				setLocationHeader(const std::string& location);
 
 private:
