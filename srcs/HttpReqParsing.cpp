@@ -4,7 +4,22 @@
 #include <map>
 
 HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
-	std::istringstream parseStream(strHttpRequest);
+	parseHeader(strHttpRequest);
+}
+
+HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& strBody) : _body(strBody)
+{
+	parseHeader(strHeader);
+}
+
+void HttpReqParsing::parseHeader(const std::string& strHeader)
+{
+	std::cout << "<--------------- raw request --------------->" << std::endl;
+	std::cout << strHeader << std::endl;
+	std::cout << "<--------------- end raw request --------------->" << std::endl;
+	std::cout << std::endl;
+
+	std::istringstream parseStream(strHeader);
 	std::string line;
 
 	std::getline(parseStream, line);
@@ -17,18 +32,12 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 		std::istringstream headerStream(line);
 		std::string key, value;
 		std::getline(headerStream, key, ':');
-		headerStream >> value;
-		// headerStream.ignore(1); //caution
-		// std::getline(headerStream, value);
+		// headerStream >> value;
+		headerStream.ignore(1); //caution
+		std::getline(headerStream, value);
 		_headers[key] = value;
 		std::cout << key << " : " << value <<std::endl;
 	}
-
-	while (std::getline(parseStream, line)) {
-		_body.append(line + "\n");
-	}
-	std::cout << _body << std::endl;
-
 }
 
 HttpReqParsing::~HttpReqParsing() {}

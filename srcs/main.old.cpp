@@ -11,6 +11,7 @@
 #include "HttpResponse.hpp"
 #include "utils.hpp"
 #include "ReqHandler.hpp"
+#include <fstream>
 
 #define PORT "8080"
 
@@ -82,45 +83,115 @@ int main() {
             // for the listening socket (server_fd) creates a new connected socket,
             // and returns a new file descriptor referring to that socket.
 
-            // std::cout << "Request received !\n";
             std::string request;
+            std::string body;
             char buffer[1024];
             ssize_t bytesRead;
             while ((bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0) {
-                // std::cout << "<----------------- debug ----------------->\n";
-                // std::cout << buffer << std::endl;
-                // std::cout << "<----------------- !debug ----------------->\n";
-                request.append(buffer, bytesRead);
-                if (request.find("\r\n\r\n") != std::string::npos)
-                    break;
+            request.append(buffer, bytesRead);
+            if (request.find("\r\n\r\n") != std::string::npos)
+                break;
+            }
+
+            if (request.find("Content-Length") != std::string::npos)
+            {
+                //split the request to get the body
+                if (request.find("\r\n\r\n") + 4 != std::string::npos)
+                {
+                    body = request.substr(request.find("\r\n\r\n") + 4, std::string::npos);
+                    request.erase(request.find("\r\n\r\n", + 4), std::string::npos);
                 }
-            // std::cout << "<----------------- end read ----------------->\n";
-
-            // char request[30000] = {0};
-            // read(clientSockFd, request, 30000);
-
-            // std::cout << request << std::endl;
-
-            HttpReqParsing hReq(request);
-
-            // std::string filePath = hReq.getUri();
-            // if (hReq.getUri() == "/")
-            //     filePath = "srcs/index.html";
-            // std::string body = readFileContent(filePath);
-
-            // HttpResponse hRes(200, body, "text/html");
-            // std::string response = hRes.toString();
-            // std::cout << response << std::endl;
-
+                int contentLength = getContentLen(request);
+                // Maybe use || instead of &&
+                while (body.size() < contentLength && (bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0)
+                {
+                    body.append(buffer, bytesRead);
+                }
+                //HttpReqParsing hReq(request, body);
+            }
+            HttpReqParsing hReq(request, body);
+            // std::cout << std::endl;
+            // std::cout << "<--------------- body --------------->" << std::endl;
+            // // std::cout << body << std::endl;
+            // std::cout << "<--------------- end body --------------->" << std::endl;
+            
+            //std::ofstream file("test.txt");
+            //file << body;
             ReqHandler  reqHandler;
             std::string response = reqHandler.handleRequest(hReq);
-            std::cout << response << std::endl;
-
-            // const char *hello = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 12\r\n\r\nHello world!";
-            // write(clientSockFd, hello, strlen(hello));
+            // std::cout << response << std::endl;
             write(clientSockFd, response.c_str(), response.size());
-            // std::cout << "------------------Hello message sent-------------------\n";
+            close(clientSockFd);
+        }
+    }
+    return 0;
+}
 
+int main() {
+    struct addrinfo hints, *res;
+    int serverFd;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE; // specify that we want to use our own IP address
+    getaddrinfo(NULL, PORT, &hints, &res);
+    if ((serverFd = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) == 0) {
+        perror("In socket");
+        exit(EXIT_FAILURE);
+    }
+    int bol = 1;
+    if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR, &bol,
+				sizeof(int)) == -1) {
+        perror("setsockopt Error");
+        exit(EXIT_FAILURE);
+    }
+    if (bind(serverFd, res->ai_addr, res->ai_addrlen) < 0) {
+        perror("In bind");
+        exit(EXIT_FAILURE);}
+    freeaddrinfo(res); // free the linked-list
+    if (listen(serverFd, 10) < 0) {
+        perror("In listen");
+        exit(EXIT_FAILURE);}
+    int kq = kqueue(); // new kernel queue created.
+
+    struct kevent change_list; // structure used to describe an event.
+    EV_SET(&change_list, serverFd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+    while(1) {
+        struct kevent event;
+        kevent(kq, &change_list, 1, &event, 1, NULL); // applies changes kqueue and retrieves events.t.
+        if (event.filter == EVFILT_READ) // is the event a read event ?
+        {
+            struct sockaddr_storage theirAddr; // general purpose socket address struct that stock client address
+
+            socklen_t addr_size = sizeof theirAddr;
+            int clientSockFd = accept(serverFd, (struct sockaddr *)&theirAddr, &addr_size);
+            std::string request;
+            std::string body;
+            char buffer[1024];
+            ssize_t bytesRead;
+            while ((bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0) {
+            request.append(buffer, bytesRead);
+            if (request.find("\r\n\r\n") != std::string::npos)
+                break;
+            }
+            if (request.find("Content-Length") != std::string::npos)
+            {
+
+                if (request.find("\r\n\r\n") + 4 != std::string::npos)
+                {
+                    body = request.substr(request.find("\r\n\r\n") + 4, std::string::npos);
+                    request.erase(request.find("\r\n\r\n", + 4), std::string::npos);
+                }
+                int contentLength = getContentLen(request);
+                while (body.size() < contentLength && (bytesRead = read(clientSockFd, buffer, sizeof(buffer))) > 0)
+                {
+                    body.append(buffer, bytesRead);
+                }
+            }
+            HttpReqParsing hReq(request, body);
+            ReqHandler  reqHandler;
+            std::string response = reqHandler.handleRequest(hReq);
+            write(clientSockFd, response.c_str(), response.size());
             close(clientSockFd);
         }
     }

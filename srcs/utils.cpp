@@ -5,18 +5,15 @@
 
 std::string readFileContent(const std::string& path) {
 	std::ifstream file(path, std::ios::binary);
-	std::cout << path;
 	std::ifstream error404("www/html/404.html", std::ios::binary);
 	std::ostringstream ss;
 	if (!file.is_open()) 
 	{
 		std::cerr << "Failed to open file: " << path << '\n';
 		ss << error404.rdbuf();
-		std::cout << "lol\n";
 	}
 	else
 		ss << file.rdbuf();
-	std::cout << "Returning : " << ss.str() << "\n";
 	return ss.str();
 }
 
@@ -47,4 +44,11 @@ int getResponseCode(const std::string& filePath)
 		return 404;
 	}
 	return 200;
+}
+
+int getContentLen(const std::string& header)
+{
+	std::string len;
+	len = header.substr(header.find("Content-Length:") + 16, (header.find("\n", header.find("Content-Length:"))));
+	return (std::stoi(len));
 }

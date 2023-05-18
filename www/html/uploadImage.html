@@ -1,33 +1,99 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Drag and Drop Demo</title>
+    <style>
+        body {
+            background-color: #f0f8ff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+            padding-top: 50px;
+        }
+        hr.spaced {
+				margin-top: 20px;
+				margin-bottom: 20px;
+			}
+        #drop_zone {
+            border: 2px dashed #bbb;
+            -moz-border-radius: 5px;
+            -webkit-border-radius: 5px;
+            border-radius: 5px;
+            padding: 25px;
+            text-align: center;
+            font: 20pt bold 'Vibur', cursive;
+            color: #bbb;
+        }
+    </style>
+</head>
 <body>
+    <div class="container">
+    <h2>Upload an image or a file</h2>
 
-<h2>Upload Image</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" id="myFile1" name="filename">
+    <input type="submit">
+    </form>
+    <br>
+    <h2>Drag and Drop image or file to upload</h2>
+    <div id="drop_zone">Drop files here</div>
+    <button id="upload_button" disabled>Upload</button>
+    <form action="/upload" method="post" enctype="multipart/form-data" id="upload_form" style="display: none;">
+        <input type="file" id="myFile" name="filename">
+    </form>
 
-<form action="/upload" method="post" enctype="multipart/form-data">
-	<input type="file" id="myFile" name="filename">
-	<input type="submit">
-</form>
+    <script>
+        let dropZone = document.getElementById('drop_zone');
+        let uploadButton = document.getElementById('upload_button');
+        let form = document.getElementById('upload_form');
+        let fileInput = document.getElementById('myFile');
 
-<h2>Drag and Drop Image</h2>
+        let droppedFiles;
 
-<div id="drop_zone" style="width:200px; height:200px; border:1px solid black">
-    Drop image here
-</div>
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = "#eee"; // Added visual feedback on dragover
+        });
 
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = ""; // Revert visual feedback on dragleave
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.backgroundColor = ""; // Revert visual feedback on drop
+            droppedFiles = e.dataTransfer.files;
+            fileInput.files = droppedFiles; // Set the file input's files to the dropped files
+            uploadButton.disabled = false; // Enable the button when files are dropped
+        });
+
+        uploadButton.addEventListener('click', () => {
+            form.submit(); // Submit the form when the button is clicked
+        });
+    </script>
+
+    <hr class="spaced">
+
+    <h2>Dangerous Zone</h2>
+<button id="delete_button">Delete all files in data folder</button>
 <script>
-let dropZone = document.getElementById('drop_zone');
-
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-});
-
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    let files = e.dataTransfer.files;
-    // Handle file upload here
-});
+    let deleteButton = document.getElementById('delete_button');
+    deleteButton.addEventListener('click', () => {
+        fetch('/delete_all', { method: 'DELETE' })
+        .then(response => {
+					if (response.ok) {
+						window.location.href = "/success.html";
+					} else {
+						console.error('Delete operation failed');
+					}
+				})
+                .catch(error => console.error(error));
+    });
 </script>
-
+    </div>
 </body>
 </html>
+

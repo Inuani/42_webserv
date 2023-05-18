@@ -8,6 +8,7 @@ class HttpReqParsing {
 
 public:
 
+	HttpReqParsing(const std::string& strHeader, const std::string& strBody);
 	HttpReqParsing(const std::string& strHttpRequest);
 	~HttpReqParsing();
 
@@ -22,6 +23,8 @@ private:
 	HttpReqParsing();
 	HttpReqParsing(const HttpReqParsing& src);
 	HttpReqParsing& operator=(const HttpReqParsing& rhs);
+
+	void parseHeader(const std::string& strHeader);
 
 	std::string							_method;
 	std::string							_uri;
