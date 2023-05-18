@@ -14,10 +14,10 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 
 void HttpReqParsing::parseHeader(const std::string& strHeader)
 {
-	std::cout << "<--------------- raw request --------------->" << std::endl;
-	std::cout << strHeader << std::endl;
-	std::cout << "<--------------- end raw request --------------->" << std::endl;
-	std::cout << std::endl;
+	// std::cout << "<--------------- raw request --------------->" << std::endl;
+	// std::cout << strHeader << std::endl;
+	// std::cout << "<--------------- end raw request --------------->" << std::endl;
+	// std::cout << std::endl;
 
 	std::istringstream parseStream(strHeader);
 	std::string line;
@@ -26,6 +26,7 @@ void HttpReqParsing::parseHeader(const std::string& strHeader)
 	std::istringstream requestStream(line);
 	requestStream >> _method >> _uri >> _version;
 
+	std::cout << "<--------------- start request --------------->" << std::endl;
 	std::cout << _method << " " << _uri << " " << _version << std::endl;
 
 	while (std::getline(parseStream, line) && line != "\r") {
@@ -38,6 +39,7 @@ void HttpReqParsing::parseHeader(const std::string& strHeader)
 		_headers[key] = value;
 		std::cout << key << " : " << value <<std::endl;
 	}
+	std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
 HttpReqParsing::~HttpReqParsing() {}

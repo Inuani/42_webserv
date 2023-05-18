@@ -8,7 +8,7 @@
 
 ReqHandler::ReqHandler() {}
 
-const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
+const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	//std::string filePath = request.getUri();
 	std::string filePath = "www/html";
 	std::string defaultFile = "/index.html";
@@ -24,7 +24,7 @@ const std::string	ReqHandler::getReqHandler(const HttpReqParsing& request) {
 	return response;
 }
 
-const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
+const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 	std::map<std::string, std::string> headers = request.getheaders();
 	std::string contentType = headers["Content-Type"];
 
@@ -55,6 +55,7 @@ const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
 		// std::cout << std::endl;
 		// std::cout << "<--------------- here --------------->" << std::endl;
 		std::string boundary = request.getBody().substr(0, 40); //caution
+		// std::string boundary = request.getBody().substr(0, request.getBody().find());
 		// std::cout << "boundary is : " << boundary << std::endl;
 
 		std::string content = request.getBody().substr(request.getBody().find("\r\n\r\n") + 4, std::string::npos);
@@ -75,7 +76,7 @@ const std::string	ReqHandler::postReqHandler(const HttpReqParsing& request) {
 	return hRes.toString();
 }
 
-const std::string	ReqHandler::deleteReqHandler(const HttpReqParsing& request) {
+const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
 	if (request.getUri() == "/delete_submissions") {
 		if (remove("./data/form_submissions.txt") != 0) {
 			HttpResponse hRes(500, "Error deleting file", "text/plain");
@@ -86,7 +87,7 @@ const std::string	ReqHandler::deleteReqHandler(const HttpReqParsing& request) {
 		return hRes.toString();
 	}
 	else if (request.getUri() == "/delete_all") {
-		system("rm -rf ./data/*");
+		std::system("rm -rf ./data/*");
 		HttpResponse hRes(303, "", "text/html"); //not sure it is working either !
 		hRes.setLocationHeader("/success.html");
 		return hRes.toString();
@@ -95,21 +96,32 @@ const std::string	ReqHandler::deleteReqHandler(const HttpReqParsing& request) {
 	return hRes.toString();
 }
 
-const std::string	ReqHandler::defaultHandler(const HttpReqParsing& request) {
+const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 	HttpResponse hRes(404, "Error", "text/plain");
 	std::string response = hRes.toString();
 	return response;
 }
 
+const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
+	
+	
+	std::string response = "";
+	return response;
+}
+
 const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
-	if (request.getMethod() == "GET") {
-		return getReqHandler(request);
+	std::string filePath = request.getUri();
+	if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "php") {
+		return _phpCgiHandler(request);
+	}
+	else if (request.getMethod() == "GET") {
+		return _getReqHandler(request);
 	} else if (request.getMethod() == "POST") {
-		return postReqHandler(request);
+		return _postReqHandler(request);
 	} else if (request.getMethod() == "DELETE") {
-		return deleteReqHandler(request);
+		return _deleteReqHandler(request);
 	} else {
-		return defaultHandler(request);
+		return _defaultHandler(request);
 	}
 }
 

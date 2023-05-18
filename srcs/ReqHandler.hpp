@@ -11,7 +11,6 @@ public:
 
 	ReqHandler();
 	~ReqHandler();
-
 	const std::string	handleRequest(const HttpReqParsing& request);
 
 private:
@@ -19,11 +18,11 @@ private:
 	ReqHandler(const ReqHandler& src);
 	ReqHandler& operator=(const ReqHandler& rhs);
 
-	// CGI
-	const std::string	getReqHandler(const HttpReqParsing& request);
-	const std::string	postReqHandler(const HttpReqParsing& request);
-	const std::string	deleteReqHandler(const HttpReqParsing& request);
-	const std::string	defaultHandler(const HttpReqParsing& request);
+	const std::string	_phpCgiHandler(const HttpReqParsing& request);
+	const std::string	_getReqHandler(const HttpReqParsing& request);
+	const std::string	_postReqHandler(const HttpReqParsing& request);
+	const std::string	_deleteReqHandler(const HttpReqParsing& request);
+	const std::string	_defaultHandler(const HttpReqParsing& request);
 
 	// GetRequestHandler	getReqHandler;
 	// PostRequestHandler	postReqHandler;
