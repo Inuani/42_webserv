@@ -116,7 +116,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 			// CGI ENV
 		};
 		execve(args[0], args, env);
-		exit(EXIT_FAILURE);
+		std::exit(EXIT_FAILURE);
 	}
 	else if (pid < 0) {
 		std::cerr << "fork Error" << std::endl;
@@ -124,12 +124,13 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	}
 	close(fd[1]);
 	char buf[1024];
-	std::string	response;
+	std::string response;
 	ssize_t n;
-	while (n = read(fd[0], buf, sizeof(buf)) > 0) {
-		response.append(buf, n);
+	while ((n = read(fd[0], buf, sizeof(buf))) > 0) {
+    	response.append(buf, n);
 	}
 	return response;
+
 }
 
 const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
