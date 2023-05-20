@@ -32,6 +32,8 @@ std::string getFileType(const std::string& filePath)
 		fileType = "image/jpeg";
 	else if (ext == ".gif")
 		fileType = "image/gif";
+	else if (ext == ".ico")
+		fileType = "image/x-icon";
 
 	return (fileType);
 }

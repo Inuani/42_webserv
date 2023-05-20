@@ -10,6 +10,7 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& strBody) : _body(strBody)
 {
 	parseHeader(strHeader);
+	// std::cout << _body << std::endl;
 }
 
 void HttpReqParsing::parseHeader(const std::string& strHeader)
@@ -56,7 +57,7 @@ const std::string&	HttpReqParsing::getVersion() const {
 	return _version;
 }
 
-const std::map<std::string, std::string>&	HttpReqParsing::getheaders() const {
+const std::map<std::string, std::string>&	HttpReqParsing::getHeaders() const {
 	return _headers;
 }
 
