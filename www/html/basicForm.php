@@ -50,6 +50,9 @@ input[type="submit"]:hover {
 <div class="output">
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+	
+
 	// collect value of input field
 	$name = $_POST['name'];
 	$email = $_POST['email'];
@@ -74,6 +77,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	echo "POST data: ";
 	print_r($_POST);
 }
+
+echo '<pre>';
+    var_dump($_ENV);
+    echo '</pre>';
+
+    echo '<pre>';
+    var_dump($_POST);
+    echo '</pre>';
+
+    echo '<pre>';
+    var_dump($_GET);
+    echo '</pre>';
+
 ?>
 </div>
 

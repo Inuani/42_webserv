@@ -114,16 +114,15 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 
 	int fd[2];
 	if (pipe(fd) < 0) {
-		std::cerr << "pipe Error" << std::endl;
+		perror("Pipe error");
 		return "";
 	}
-
 	char *args[] = {"./cgi-bin/php-cgi", NULL};
 	std::vector<char*> env;
 	env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
 	env.push_back(strdup(("QUERY_STRING=")));
 	env.push_back(strdup(("SCRIPT_NAME=" + request.getUri()).c_str())); // do not include query string
-	env.push_back(strdup(("REQUEST_URI=" + request.getUri()).c_str())); // do include query string
+	env.push_back(strdup(("REQUEST_URI=" + request.getUri() + request.getQueryString()).c_str())); // do include query string
 	env.push_back(strdup(("DOCUMENT_ROOT=./www/html"))); // make dynamic !
 	env.push_back(strdup(("SCRIPT_FILENAME=./www/html" + request.getUri()).c_str())); //make dynamic !
 	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
@@ -135,29 +134,38 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	env.push_back(strdup("REDIRECT_STATUS=200")); // make dynamic ? if yes how ?
 	if (request.getMethod() == "POST") {
 		env.push_back(strdup(("CONTENT_TYPE=" + request.getHeadersValue("Content-Type")).c_str()));
-		std::cout << "CONTENT_TYPE: " << request.getHeadersValue("Content-Type") << std::endl;
+		// std::cout << "CONTENT_TYPE: " << request.getHeadersValue("Content-Type") << std::endl;
 		env.push_back(strdup(("CONTENT_LENGTH=" + std::to_string(request.getBody().size())).c_str()));
-		std::cout << "CONTENT_LENGTH: " << std::to_string(request.getBody().size()) << std::endl;
-		std::cout << "Request Body: " << request.getBody() << std::endl;
+		// std::cout << "CONTENT_LENGTH: " << std::to_string(request.getBody().size()) << std::endl;
+		// std::cout << "Request Body: " << request.getBody() << std::endl;
 	}
 	env.push_back(NULL);
-
+	
 	pid_t	pid = fork();
 	if (pid == 0) {
 
+	int bodyFd[2];
+	if (pipe(bodyFd) < 0) {
+		std::cerr << "Pipe Error" << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
+	
 	if (request.getMethod() == "POST") {
 		std::string contentType = request.getHeadersValue("Content-Type");
 		if (contentType.find("application/x-www-form-urlencoded") != std::string::npos) {
-			write(STDIN_FILENO, request.getBody().c_str(), request.getBody().size());
+			// std::cout << request.getBody() << std::endl;
+			write(bodyFd[1], request.getBody().c_str(), request.getBody().size());
+			close(bodyFd[1]);
 		}
 		else if (contentType.find("multipart/form-data") != std::string::npos) {
 
 		}
 	}
-		// close(fd[0]);
-		dup2(fd[0], STDIN_FILENO);
+		dup2(bodyFd[0], STDIN_FILENO);
+		// std::cout << "CONTENT_TYPE: " << request.getHeadersValue("Content-Type") << std::endl;
+		// std::cout << "CONTENT_LENGTH: " << std::to_string(request.getBody().size()) << std::endl;
 		dup2(fd[1], STDOUT_FILENO);
-
+		// close(bodyFd[0]);
 		close(fd[0]);
 		close(fd[1]);
 
@@ -171,31 +179,25 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		return "";
 	}
 	
+	int status;
+	waitpid(pid, &status, 0);
+
 	std::cout << "coucou" << std::endl;
 	close(fd[1]);
 	
 	std::vector<char> buffer(1024);
-std::string cgiOutput;
+	std::string cgiOutput;
 
-while (true) {
-	ssize_t n = read(fd[0], &buffer[0], buffer.size());
-	if (n <= 0) {
-		break;  // Break the loop if read() returned 0 (end of file) or -1 (error)
+	while (true) {
+		ssize_t n = read(fd[0], &buffer[0], buffer.size());
+		if (n <= 0) {
+			break;  // Break the loop if read() returned 0 (end of file) or -1 (error)
+		}
+		cgiOutput.append(buffer.begin(), buffer.begin() + n);
 	}
-	cgiOutput.append(buffer.begin(), buffer.begin() + n);
-}
-
-	// char buf[1024];
-	// std::string cgiOutput;
-	// ssize_t n;
-	// while ((n = read(fd[0], buf, sizeof(buf))) > 0) {
-	// 	cgiOutput.append(buf, n);
-	// }
 
 	std::cout << "coucou2" << std::endl;
 	close(fd[0]);
-	int status;
-	waitpid(pid, &status, 0);
 	std::map<std::string, std::string> headersMap;
 	std::string body;
 	bool inBody = false;

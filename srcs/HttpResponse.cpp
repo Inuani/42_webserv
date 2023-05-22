@@ -19,7 +19,7 @@ std::string	HttpResponse::toString() const {
 	}
 	response += "\r\n";
 	response += _body;
-	std::cout << response << std::endl;
+	// std::cout << response << std::endl;
 	return response;
 }
 
