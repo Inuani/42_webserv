@@ -12,11 +12,13 @@ public:
 	HttpReqParsing(const std::string& strHttpRequest);
 	~HttpReqParsing();
 
-	const std::string&	getMethod() const;
-	const std::string&	getUri() const;
-	const std::string&	getVersion() const;
+	const std::string&							getMethod() const;
+	const std::string&							getUri() const;
+	const std::string&							getVersion() const;
 	const std::map<std::string, std::string>&	getHeaders() const;
-	const std::string&	getBody() const;
+	const std::string&							getBody() const;
+	const std::string&							getQueryString() const;
+	const std::string&							getHeadersValue(const std::string& key) const;
 
 private:
 
@@ -31,6 +33,7 @@ private:
 	std::string							_version;
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
+	std::string							_queryString;
 
 };
 

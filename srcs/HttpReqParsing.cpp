@@ -10,7 +10,9 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& strBody) : _body(strBody)
 {
 	parseHeader(strHeader);
-	// std::cout << _body << std::endl;
+	std::cout << std::endl;
+	std::cout << _body << std::endl;
+	std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
 void HttpReqParsing::parseHeader(const std::string& strHeader)
@@ -27,8 +29,17 @@ void HttpReqParsing::parseHeader(const std::string& strHeader)
 	std::istringstream requestStream(line);
 	requestStream >> _method >> _uri >> _version;
 
+	size_t pos = _uri.find('?');
+	if (pos != std::string::npos) {
+		_queryString = _uri.substr(pos + 1);
+		_uri = _uri.substr(0, pos);
+	}
+
 	std::cout << "<--------------- start request --------------->" << std::endl;
-	std::cout << _method << " " << _uri << " " << _version << std::endl;
+	std::cout << _method << " " << _uri << " " << _version << std::endl;	
+	if (!_queryString.empty()) {
+		std::cout << "query string : " << _queryString << std::endl;	
+	}
 
 	while (std::getline(parseStream, line) && line != "\r") {
 		std::istringstream headerStream(line);
@@ -40,10 +51,17 @@ void HttpReqParsing::parseHeader(const std::string& strHeader)
 		_headers[key] = value;
 		std::cout << key << " : " << value <<std::endl;
 	}
-	std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
 HttpReqParsing::~HttpReqParsing() {}
+
+const std::string&	HttpReqParsing::getHeadersValue(const std::string& key) const {
+	std::map<std::string, std::string>::const_iterator it = _headers.find(key);
+	if (it != _headers.end()) {
+		return it->second;
+	}
+	return "";
+}
 
 const std::string&	HttpReqParsing::getMethod() const {
 	return _method;
@@ -63,6 +81,10 @@ const std::map<std::string, std::string>&	HttpReqParsing::getHeaders() const {
 
 const std::string&	HttpReqParsing::getBody() const {
 	return _body;
+}
+
+const std::string&	HttpReqParsing::getQueryString() const {
+	return _queryString;
 }
 
 HttpReqParsing::HttpReqParsing() {}

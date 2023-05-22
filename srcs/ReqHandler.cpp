@@ -3,9 +3,11 @@
 #include "utils.hpp"
 #include <sstream>
 #include <map>
+#include <vector>
 #include <fstream>
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 ReqHandler::ReqHandler() {}
 
@@ -18,7 +20,6 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	else
 		filePath.append(request.getUri());
 	std::string body = readFileContent(filePath);
-	// HttpResponse hRes(getResponseCode(filePath), body, getFileType(filePath));
 	HttpResponse hRes(getResponseCode(filePath), body);
 	hRes.setHeaders("Content-Type", getFileType(filePath));
 	std::string response = hRes.toString();
@@ -27,8 +28,9 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
-	std::map<std::string, std::string> headers = request.getHeaders();
-	std::string contentType = headers["Content-Type"];
+	// std::map<std::string, std::string> headers = request.getHeaders();
+	// std::string contentType = headers["Content-Type"];
+	std::string contentType = request.getHeadersValue("Content-Type");
 
 	std::cout << contentType << std::endl;
 	// std::cout << request.getBody() << std::endl;
@@ -48,8 +50,6 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 			outFile << it->first << ": " << it->second << "\n";
 		}
 		outFile.close();
-		// HttpResponse hRes(303, "", "text/html");
-		// hRes.setLocationHeader("/success.html");
 		HttpResponse hRes(303, "");
 		hRes.setHeaders("Content-Type", "text/html");
 		hRes.setHeaders("Location", "/success.html");
@@ -69,14 +69,11 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 		std::ofstream file(filename);
 		file << content;
 
-		// HttpResponse hRes(303, "", "text/html");
-		// hRes.setLocationHeader("/uploadSuccess.html");
 		HttpResponse hRes(303, "");
 		hRes.setHeaders("Content-Type", "text/html");
 		hRes.setHeaders("Location", "/uploadSuccess.html");
 		return hRes.toString();
 	}
-	// HttpResponse hRes(404, "Error", "text/html");
 	HttpResponse hRes(404, "Error");
 	hRes.setHeaders("Content-Type", "text/plain");
 	return hRes.toString();
@@ -85,13 +82,10 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
 	if (request.getUri() == "/delete_submissions") {
 		if (remove("./data/form_submissions.txt") != 0) {
-			// HttpResponse hRes(500, "Error deleting file", "text/plain");
 			HttpResponse hRes(500, "Error deleting file");
 			hRes.setHeaders("Content-Type", "text/plain");
 			return hRes.toString();
 		}
-		// HttpResponse hRes(303, "", "text/html"); //not sure it is working
-		// hRes.setLocationHeader("/success.html");
 		HttpResponse hRes(303, ""); //not sure it is working
 		hRes.setHeaders("Content-Type", "text/html");
 		hRes.setHeaders("Location", "/success.html");
@@ -99,21 +93,17 @@ const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
 	}
 	else if (request.getUri() == "/delete_all") {
 		std::system("rm -rf ./data/*");
-		// HttpResponse hRes(303, "", "text/html"); //not sure it is working either !
-		// hRes.setLocationHeader("/success.html");
 		HttpResponse hRes(303, ""); //not sure it is working
 		hRes.setHeaders("Content-Type", "text/html");
 		hRes.setHeaders("Location", "/success.html");
 		return hRes.toString();
 	}
-	// HttpResponse hRes(404, "Error", "text/plain");
 	HttpResponse hRes(404, "Error");
 	hRes.setHeaders("Content-Type", "text/plain");
 	return hRes.toString();
 }
 
 const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
-	// HttpResponse hRes(404, "Error", "text/plain");
 	HttpResponse hRes(404, "Error");
 	hRes.setHeaders("Content-Type", "text/plain");
 	std::string response = hRes.toString();
@@ -128,34 +118,50 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		return "";
 	}
 
-	// 	int i = 0;
-	// 	while (env[i] != NULL) {
-	// 		printf("%s\n", env[i]);
-	// 		++i;
-	// 	}
+	char *args[] = {"./cgi-bin/php-cgi", NULL};
+	std::vector<char*> env;
+	env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
+	env.push_back(strdup(("QUERY_STRING=")));
+	env.push_back(strdup(("SCRIPT_NAME=" + request.getUri()).c_str())); // do not include query string
+	env.push_back(strdup(("REQUEST_URI=" + request.getUri()).c_str())); // do include query string
+	env.push_back(strdup(("DOCUMENT_ROOT=./www/html"))); // make dynamic !
+	env.push_back(strdup(("SCRIPT_FILENAME=./www/html" + request.getUri()).c_str())); //make dynamic !
+	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
+		// strdup("REMOTE_ADDR=" + request.getClientIP().c_str()), //is it needed sometimes ?
+	env.push_back(strdup(("SERVER_SOFTWARE=WebservGaming/1.0")));
+	env.push_back(strdup(("HTTP_USER_AGENT=" + request.getHeaders().at("User-Agent")).c_str()));
+	env.push_back(strdup(("HTTP_ACCEPT=" + request.getHeaders().at("Accept")).c_str()));
+	env.push_back(strdup(("HTTP_HOST=" + request.getHeaders().at("Host")).c_str()));
+	env.push_back(strdup("REDIRECT_STATUS=200")); // make dynamic ? if yes how ?
+	if (request.getMethod() == "POST") {
+		env.push_back(strdup(("CONTENT_TYPE=" + request.getHeadersValue("Content-Type")).c_str()));
+		std::cout << "CONTENT_TYPE: " << request.getHeadersValue("Content-Type") << std::endl;
+		env.push_back(strdup(("CONTENT_LENGTH=" + std::to_string(request.getBody().size())).c_str()));
+		std::cout << "CONTENT_LENGTH: " << std::to_string(request.getBody().size()) << std::endl;
+		std::cout << "Request Body: " << request.getBody() << std::endl;
+	}
+	env.push_back(NULL);
 
 	pid_t	pid = fork();
 	if (pid == 0) {
-		close(fd[0]);
+
+	if (request.getMethod() == "POST") {
+		std::string contentType = request.getHeadersValue("Content-Type");
+		if (contentType.find("application/x-www-form-urlencoded") != std::string::npos) {
+			write(STDIN_FILENO, request.getBody().c_str(), request.getBody().size());
+		}
+		else if (contentType.find("multipart/form-data") != std::string::npos) {
+
+		}
+	}
+		// close(fd[0]);
+		dup2(fd[0], STDIN_FILENO);
 		dup2(fd[1], STDOUT_FILENO);
-		char *args[] = {"./cgi-bin/php-cgi", NULL};
-		char *env[] = {
-			strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()),
-			strdup(("QUERY_STRING=")),
-			strdup(("SCRIPT_NAME=" + request.getUri()).c_str()), // do not include query string
-			strdup(("REQUEST_URI=" + request.getUri()).c_str()), // do include query string
-			strdup(("DOCUMENT_ROOT=./www/html")), // make dynamic !
-			strdup(("SCRIPT_FILENAME=./www/html" + request.getUri()).c_str()), //make dynamic !
-			strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()),
-			// strdup("REMOTE_ADDR=" + request.getClientIP().c_str()), //is it needed sometimes ?
-			strdup(("SERVER_SOFTWARE=WebservGaming/1.0")),
-			strdup(("HTTP_USER_AGENT=" + request.getHeaders().at("User-Agent")).c_str()),
-			strdup(("HTTP_ACCEPT=" + request.getHeaders().at("Accept")).c_str()),
-			strdup(("HTTP_HOST=" + request.getHeaders().at("Host")).c_str()),
-			strdup("REDIRECT_STATUS=200"), // make dynamic ? if yes how ?
-			NULL
-		};
-		if (execve(args[0], args, env) == -1) {
+
+		close(fd[0]);
+		close(fd[1]);
+
+		if (execve(args[0], args, &env[0]) == -1) {
 			perror("execve failed");
 			std::exit(EXIT_FAILURE);
 		}
@@ -165,31 +171,31 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		return "";
 	}
 	
-	// close(fd[1]);
+	std::cout << "coucou" << std::endl;
+	close(fd[1]);
+	
+	std::vector<char> buffer(1024);
+std::string cgiOutput;
+
+while (true) {
+	ssize_t n = read(fd[0], &buffer[0], buffer.size());
+	if (n <= 0) {
+		break;  // Break the loop if read() returned 0 (end of file) or -1 (error)
+	}
+	cgiOutput.append(buffer.begin(), buffer.begin() + n);
+}
+
 	// char buf[1024];
-	// std::string body;
+	// std::string cgiOutput;
 	// ssize_t n;
 	// while ((n = read(fd[0], buf, sizeof(buf))) > 0) {
-	// 	body.append(buf, n);
+	// 	cgiOutput.append(buf, n);
 	// }
-	// int status;
-	// waitpid(pid, &status, 0);
 
-	// // HttpResponse hRes(200, body, "text/html");
-	// HttpResponse hRes(200, body);
-	// hRes.setHeaders("Content-Type", "text/html");
-
-
-	close(fd[1]);
-	char buf[1024];
-	std::string cgiOutput;
-	ssize_t n;
-	while ((n = read(fd[0], buf, sizeof(buf))) > 0) {
-		cgiOutput.append(buf, n);
-	}
+	std::cout << "coucou2" << std::endl;
+	close(fd[0]);
 	int status;
 	waitpid(pid, &status, 0);
-
 	std::map<std::string, std::string> headersMap;
 	std::string body;
 	bool inBody = false;
