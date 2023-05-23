@@ -78,17 +78,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	print_r($_POST);
 }
 
-echo '<pre>';
-    var_dump($_ENV);
-    echo '</pre>';
+// echo '<pre>';
+//     var_dump($_ENV);
+//     echo '</pre>';
 
-    echo '<pre>';
-    var_dump($_POST);
-    echo '</pre>';
+//     echo '<pre>';
+//     var_dump($_POST);
+//     echo '</pre>';
 
-    echo '<pre>';
-    var_dump($_GET);
-    echo '</pre>';
+//     echo '<pre>';
+//     var_dump($_GET);
+//     echo '</pre>';
 
 ?>
 </div>

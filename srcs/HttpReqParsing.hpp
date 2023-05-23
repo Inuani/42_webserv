@@ -26,7 +26,8 @@ private:
 	HttpReqParsing(const HttpReqParsing& src);
 	HttpReqParsing& operator=(const HttpReqParsing& rhs);
 
-	void parseHeader(const std::string& strHeader);
+	void	_parseHeader(const std::string& strHeader);
+	void	_queryStr2Map(const std::string& queryString);
 
 	std::string							_method;
 	std::string							_uri;
@@ -34,6 +35,7 @@ private:
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
 	std::string							_queryString;
+	std::map<std::string, std::string>	_queryMap;
 
 };
 

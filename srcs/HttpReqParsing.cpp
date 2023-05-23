@@ -4,18 +4,18 @@
 #include <map>
 
 HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
-	parseHeader(strHttpRequest);
+	_parseHeader(strHttpRequest);
 }
 
 HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& strBody) : _body(strBody)
 {
-	parseHeader(strHeader);
+	_parseHeader(strHeader);
 	std::cout << std::endl;
 	std::cout << _body << std::endl;
 	std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
-void HttpReqParsing::parseHeader(const std::string& strHeader)
+void HttpReqParsing::_parseHeader(const std::string& strHeader)
 {
 	// std::cout << "<--------------- raw request --------------->" << std::endl;
 	// std::cout << strHeader << std::endl;
@@ -25,13 +25,22 @@ void HttpReqParsing::parseHeader(const std::string& strHeader)
 	std::istringstream parseStream(strHeader);
 	std::string line;
 
+	// if (!std::getline(parseStream, line)) {
+	//     throw std::invalid_argument("Invalid HTTP request: no request line");
+	// }
+
 	std::getline(parseStream, line);
 	std::istringstream requestStream(line);
+
+	// if (!(requestStream >> _method >> _uri >> _version)) {
+	//		throw std::invalid_argument("Invalid HTTP request: malformed request line");
+	// }
 	requestStream >> _method >> _uri >> _version;
 
 	size_t pos = _uri.find('?');
 	if (pos != std::string::npos) {
 		_queryString = _uri.substr(pos + 1);
+		_queryStr2Map(_queryString);
 		_uri = _uri.substr(0, pos);
 	}
 
@@ -44,12 +53,21 @@ void HttpReqParsing::parseHeader(const std::string& strHeader)
 	while (std::getline(parseStream, line) && line != "\r") {
 		std::istringstream headerStream(line);
 		std::string key, value;
+		// if (!std::getline(headerStream, key, ':')) {
+        //     throw std::invalid_argument("Invalid HTTP request: malformed header line");
+        // }
 		std::getline(headerStream, key, ':');
+		key.erase(key.find_last_not_of(" \n\r\t")+1);
 		// headerStream >> value;
-		headerStream.ignore(1); //caution
+		// headerStream.ignore(1); //caution
 		std::getline(headerStream, value);
+		size_t start = value.find_first_not_of(" \n\r\t");
+        if (start != std::string::npos) {
+            value = value.substr(start);
+        }
+		value.erase(value.find_last_not_of(" \n\r\t") + 1);
 		_headers[key] = value;
-		std::cout << key << " : " << value <<std::endl;
+		std::cout << key << " : " << value << std::endl;
 	}
 }
 
@@ -61,6 +79,21 @@ const std::string&	HttpReqParsing::getHeadersValue(const std::string& key) const
 		return it->second;
 	}
 	return "";
+}
+
+// std::string	HttpReqParsing::_urlDecode(const)
+
+void	HttpReqParsing::_queryStr2Map(const std::string& queryString) {
+	std::istringstream	queryStream(queryString);
+	std::string			token;
+	while (std::getline(queryStream, token, '&')) {
+		size_t pos = token.find('=');
+		if (pos != std::string::npos) {
+			std::string key = token.substr(0, pos);
+			std::string value = token.substr(pos + 1);
+			_queryMap[key] = value;
+		}
+	}
 }
 
 const std::string&	HttpReqParsing::getMethod() const {
