@@ -19,6 +19,7 @@ public:
 	const std::string&							getBody() const;
 	const std::string&							getQueryString() const;
 	const std::string&							getHeadersValue(const std::string& key) const;
+	const std::string&							getQueryValue(const std::string& key) const;
 
 private:
 
@@ -26,8 +27,9 @@ private:
 	HttpReqParsing(const HttpReqParsing& src);
 	HttpReqParsing& operator=(const HttpReqParsing& rhs);
 
-	void	_parseHeader(const std::string& strHeader);
-	void	_queryStr2Map(const std::string& queryString);
+	void		_parseHeader(const std::string& strHeader);
+	void		_queryStr2Map(const std::string& queryString);
+	std::string	_decodeUrl(const std::string& qS);
 
 	std::string							_method;
 	std::string							_uri;

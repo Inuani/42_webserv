@@ -15,7 +15,9 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	//std::string filePath = request.getUri();
 	std::string filePath = "www/html";
 	std::string defaultFile = "/index.html";
-	if (request.getUri() == "/")
+	if (request.getQueryString().find("file")  != std::string::npos) {
+		filePath.append("/" + request.getQueryValue("file"));
+	} else if (request.getUri() == "/")
 		filePath.append(defaultFile);
 	else
 		filePath.append(request.getUri());
@@ -170,7 +172,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		close(fd[1]);
 
 		if (execve(args[0], args, &env[0]) == -1) {
-			perror("execve failed");
+			std::cerr << "execve failed" << std::endl;
 			std::exit(EXIT_FAILURE);
 		}
 	}

@@ -17,10 +17,6 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
 {
-	// std::cout << "<--------------- raw request --------------->" << std::endl;
-	// std::cout << strHeader << std::endl;
-	// std::cout << "<--------------- end raw request --------------->" << std::endl;
-	// std::cout << std::endl;
 
 	std::istringstream parseStream(strHeader);
 	std::string line;
@@ -28,7 +24,6 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	// if (!std::getline(parseStream, line)) {
 	//     throw std::invalid_argument("Invalid HTTP request: no request line");
 	// }
-
 	std::getline(parseStream, line);
 	std::istringstream requestStream(line);
 
@@ -81,7 +76,33 @@ const std::string&	HttpReqParsing::getHeadersValue(const std::string& key) const
 	return "";
 }
 
-// std::string	HttpReqParsing::_urlDecode(const)
+const std::string&	HttpReqParsing::getQueryValue(const std::string& key) const {
+	std::map<std::string, std::string>::const_iterator it = _queryMap.find(key);
+	if (it != _queryMap.end()) {
+		return it->second;
+	}
+	return "";
+}
+
+std::string	HttpReqParsing::_decodeUrl(const std::string& qS) {
+	std::string	decoded;
+	for (size_t i = 0; i < qS.length(); ++i) {
+		if (qS[i] == '+') {
+			decoded += ' ';
+		} else if (qS[i] == '%' && i + 2 < qS.length()) {
+			std::string hexStr = qS.substr(i + 1, 2);
+			std::istringstream hexS(hexStr);
+			int hex2int;
+			hexS >> std::hex >> hex2int;
+			char c = static_cast<char>(hex2int);
+			decoded += c;
+			i += 2;
+		} else {
+			decoded += qS[i];
+		}
+	}
+	return decoded;
+}
 
 void	HttpReqParsing::_queryStr2Map(const std::string& queryString) {
 	std::istringstream	queryStream(queryString);
@@ -91,6 +112,8 @@ void	HttpReqParsing::_queryStr2Map(const std::string& queryString) {
 		if (pos != std::string::npos) {
 			std::string key = token.substr(0, pos);
 			std::string value = token.substr(pos + 1);
+			key = _decodeUrl(key);
+			value = _decodeUrl(value);
 			_queryMap[key] = value;
 		}
 	}
