@@ -134,7 +134,6 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 		args[0] = (char *)"/usr/bin/python3";
 		std::string pythonPath = "./www/html" + request.getUri();
 		args[1] = (char *)pythonPath.c_str();
-		printf("%s\n", args[1]);
 	}
 	else if (filePath.substr(filePath.find_last_of(".") + 1) == "php") {
 		args[0] = (char *)"./cgi-bin/php-cgi";
