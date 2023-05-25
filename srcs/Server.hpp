@@ -22,6 +22,11 @@
 #include <cstdio>
 
 #include <deque>
+#include <vector>
+#include <map>
+
+#include "Settings.h"
+#include "HttpReqParsing.hpp"
 
 #define PORT "8080"
 #define BACKLOG 10
@@ -30,25 +35,32 @@
 class Serv
 {
 	private:
-		//std::deque<int> uc; //useful here?
-		int sockfd;
-		struct addrinfo *res;
-		int _port;
-		int _nevents;
+		std::string _request;
+		std::string _body;
+
+		struct addrinfo *_res;
+		std::vector<Settings> _settings;
+		std::map<int, Settings> sockfd;
 
 	public:
 		Serv();
 		~Serv();
-		void	err(std::string msg);
-		void	setAddrinfo();
-		void	bindSocket();
-		void	srvListen();
-		void	setEvent();
-		void	handledEvents(int kq);
-		void	sendall(int fd, std::string msg);
+		Serv(Settings settings);
 
-		const void	port_setter(int port);
-		const void	nevents_setter(int nevents);
+		void		err(std::string msg);
+		void		setBindAddrinfo();
+		void		srvListen();
+		void		setEvent();
+		void		handledEvents(int kq);
+		void		sendall(int fd, std::string msg);
+		void		recvAll(int fd);
+		bool		maxBodyTooSmall(int);
+
+		std::vector<std::string> miniSplit(std::string toSplit);
+		bool hostMatching(std::string host, std::vector<std::string> hosts_conf, int port);
+		Settings *hostMatchingConfigs();
+		std::string	getHost(std::string);
+		const void	settings_setter(std::vector<Settings> settings);
 };
 
 #endif
