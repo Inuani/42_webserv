@@ -1,5 +1,6 @@
 #include "HttpResponse.hpp"
 #include <iostream>
+#include <sstream>
 
 // HttpResponse::HttpResponse(int status, const std::string& body, const std::string& contentType) 
 // 	: _status(status), _body(body), _contentType(contentType) {
@@ -13,7 +14,10 @@ HttpResponse::~HttpResponse() {}
 
 std::string	HttpResponse::toString() const {
 	std::string	response;
-	response += "HTTP/1.1 " + std::to_string(_status) + " " + getStatusMessage(_status) + "\r\n";
+	std::ostringstream oInt;
+	oInt << _status;
+	std::string	int2Str = oInt.str();
+	response += "HTTP/1.1 " + int2Str + " " + getStatusMessage(_status) + "\r\n";
 	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it) {
 		response += it->first + ": " + it->second + "\r\n";
 	}

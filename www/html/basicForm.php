@@ -1,8 +1,19 @@
+<?php
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // collect value of input field & set cookies
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
 
+    setcookie("name", $name, time() + (60 * 3), "/");
+    setcookie("email", $email, time() + (60 * 3), "/");
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
 <style>
+
 body {
 	display: flex;
 	justify-content: center;
@@ -41,8 +52,8 @@ input[type="submit"]:hover {
 <body>
 
 <form method="post" action="<?php echo $_SERVER['PHP_SELF'];?>">
-	Name: <input type="text" name="name"> <br><br>
-	Email: <input type="text" name="email"> <br><br>
+	Name: <input type="text" name="name" value="<?php echo isset($_COOKIE['name']) ? $_COOKIE['name'] : ''; ?>"> <br><br>
+	Email: <input type="text" name="email" value="<?php echo isset($_COOKIE['email']) ? $_COOKIE['email'] : ''; ?>"> <br><br>
 	Password: <input type="password" name="password"> <br><br>
 	<input type="submit">
 </form>
@@ -51,12 +62,14 @@ input[type="submit"]:hover {
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-	
+	// // collect value of input field & set cookies
+	// $name = $_POST['name'];
+	// $email = $_POST['email'];
+	// $password = $_POST['password'];
 
-	// collect value of input field
-	$name = $_POST['name'];
-	$email = $_POST['email'];
-	$password = $_POST['password'];
+	// setcookie("name", $name, time() + (60 * 3), "/");
+	// setcookie("email", $email, time() + (60 * 3), "/");
+
 	if (empty($name)) {
 		echo "Name is empty <br>";
 	} else {
@@ -76,6 +89,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	// Print out the contents of the $_POST array
 	echo "POST data: ";
 	print_r($_POST);
+	echo "<br>";
+	echo "Cookie data: ";
+	print_r($_COOKIE);
 }
 
 // echo '<pre>';

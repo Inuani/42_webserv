@@ -68,7 +68,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 
 HttpReqParsing::~HttpReqParsing() {}
 
-const std::string&	HttpReqParsing::getHeadersValue(const std::string& key) const {
+const std::string	HttpReqParsing::getHeadersValue(const std::string& key) const {
 	std::map<std::string, std::string>::const_iterator it = _headers.find(key);
 	if (it != _headers.end()) {
 		return it->second;
@@ -76,7 +76,7 @@ const std::string&	HttpReqParsing::getHeadersValue(const std::string& key) const
 	return "";
 }
 
-const std::string&	HttpReqParsing::getQueryValue(const std::string& key) const {
+const std::string	HttpReqParsing::getQueryValue(const std::string& key) const {
 	std::map<std::string, std::string>::const_iterator it = _queryMap.find(key);
 	if (it != _queryMap.end()) {
 		return it->second;

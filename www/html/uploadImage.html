@@ -33,9 +33,23 @@
 	<h2>Upload an image or a file</h2>
 
 	<form action="/upload" method="post" enctype="multipart/form-data">
-	<input type="file" id="myFile1" name="filename">
-	<input type="submit">
+	<input type="file" id="myFile1" name="filename" onchange="enableSubmit()">
+	<input type="submit" id="submitButton" disabled>
 	</form>
+
+	<script>
+		function enableSubmit() {
+		  var fileInput = document.getElementById('myFile1');
+		  var submitButton = document.getElementById('submitButton');
+		  
+		  if (fileInput.files.length > 0) {
+			submitButton.disabled = false;
+		  } else {
+			submitButton.disabled = true;
+		  }
+		}
+	  </script>
+
 	<br>
 	<h2>Drag and Drop image or file to upload</h2>
 	<div id="drop_zone">Drop files here</div>

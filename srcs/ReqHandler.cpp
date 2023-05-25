@@ -15,7 +15,7 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	//std::string filePath = request.getUri();
 	std::string filePath = "www/html";
 	std::string defaultFile = "/index.html";
-	if (request.getQueryString().find("file")  != std::string::npos) {
+	if (request.getQueryString().find("file") != std::string::npos) {
 		filePath.append("/" + request.getQueryValue("file"));
 	} else if (request.getUri() == "/")
 		filePath.append(defaultFile);
@@ -120,6 +120,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		return "";
 	}
 	char *args[] = {"./cgi-bin/php-cgi", NULL};
+	std::string cookies = request.getHeadersValue("Cookie");
 	std::vector<char*> env;
 	env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
 	env.push_back(strdup(("QUERY_STRING=")));
@@ -140,6 +141,9 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		env.push_back(strdup(("CONTENT_LENGTH=" + std::to_string(request.getBody().size())).c_str()));
 		// std::cout << "CONTENT_LENGTH: " << std::to_string(request.getBody().size()) << std::endl;
 		// std::cout << "Request Body: " << request.getBody() << std::endl;
+	}
+	if (!cookies.empty()) {
+		env.push_back(strdup(("HTTP_COOKIE=" + cookies).c_str()));
 	}
 	env.push_back(NULL);
 	
@@ -184,7 +188,6 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	int status;
 	waitpid(pid, &status, 0);
 
-	std::cout << "coucou" << std::endl;
 	close(fd[1]);
 	
 	std::vector<char> buffer(1024);
@@ -193,12 +196,11 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	while (true) {
 		ssize_t n = read(fd[0], &buffer[0], buffer.size());
 		if (n <= 0) {
-			break;  // Break the loop if read() returned 0 (end of file) or -1 (error)
+			break;
 		}
 		cgiOutput.append(buffer.begin(), buffer.begin() + n);
 	}
 
-	std::cout << "coucou2" << std::endl;
 	close(fd[0]);
 	std::map<std::string, std::string> headersMap;
 	std::string body;
