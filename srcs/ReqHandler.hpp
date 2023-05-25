@@ -18,7 +18,7 @@ private:
 	ReqHandler(const ReqHandler& src);
 	ReqHandler& operator=(const ReqHandler& rhs);
 
-	const std::string	_phpCgiHandler(const HttpReqParsing& request, const std::string& filePath);
+	const std::string	_cgiHandler(const HttpReqParsing& request, const std::string& filePath);
 	// const std::string	_pythonCgiHandler(const HttpReqParsing& request);
 	const std::string	_getReqHandler(const HttpReqParsing& request);
 	const std::string	_postReqHandler(const HttpReqParsing& request);

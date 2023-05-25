@@ -122,7 +122,7 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 
 // }
 
-const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request, const std::string& filePath) {
+const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const std::string& filePath) {
 
 	int fd[2];
 	if (pipe(fd) < 0) {
@@ -253,10 +253,10 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request, cons
 const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
 	std::string filePath = request.getUri();
 	if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "php") {
-		return _phpCgiHandler(request, filePath);
+		return _cgiHandler(request, filePath);
 	}
 	else if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "py") {
-		return _phpCgiHandler(request, filePath);
+		return _cgiHandler(request, filePath);
 	}
 	else if (request.getMethod() == "GET") {
 		return _getReqHandler(request);
