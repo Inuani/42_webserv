@@ -23,7 +23,7 @@ private:
 	std::string							_body;
 	// std::string							_contentType;
 	// std::string							_location;
-	std::map<std::string, std::string> _headers;
+	std::multimap<std::string, std::string> _headers;
 
 	HttpResponse();
 	HttpResponse(const HttpResponse& src);

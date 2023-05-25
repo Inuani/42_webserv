@@ -131,9 +131,9 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
 		// strdup("REMOTE_ADDR=" + request.getClientIP().c_str()), //is it needed sometimes ?
 	env.push_back(strdup(("SERVER_SOFTWARE=WebservGaming/1.0")));
-	env.push_back(strdup(("HTTP_USER_AGENT=" + request.getHeaders().at("User-Agent")).c_str()));
-	env.push_back(strdup(("HTTP_ACCEPT=" + request.getHeaders().at("Accept")).c_str()));
-	env.push_back(strdup(("HTTP_HOST=" + request.getHeaders().at("Host")).c_str()));
+	env.push_back(strdup(("HTTP_USER_AGENT=" + request.getHeadersValue("User-Agent")).c_str()));
+	env.push_back(strdup(("HTTP_ACCEPT=" + request.getHeadersValue("Accept")).c_str()));
+	env.push_back(strdup(("HTTP_HOST=" + request.getHeadersValue("Host")).c_str()));
 	env.push_back(strdup("REDIRECT_STATUS=200")); // make dynamic ? if yes how ?
 	if (request.getMethod() == "POST") {
 		env.push_back(strdup(("CONTENT_TYPE=" + request.getHeadersValue("Content-Type")).c_str()));
@@ -202,7 +202,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	}
 
 	close(fd[0]);
-	std::map<std::string, std::string> headersMap;
+	std::multimap<std::string, std::string> headersMap;
 	std::string body;
 	bool inBody = false;
 
@@ -214,7 +214,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 			} else {
 				std::string key = line.substr(0, line.find(":"));
 				std::string value = line.substr(line.find(":") + 2);
-				headersMap[key] = value;
+				headersMap.insert(std::make_pair(key, value));
 			}
 		} else {
 			body += line + "\n";
@@ -222,7 +222,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 	}
 
 	HttpResponse hRes(200, body);
-	for (std::map<std::string, std::string>::const_iterator it = headersMap.begin(); it != headersMap.end(); ++it) {
+	for (std::multimap<std::string, std::string>::const_iterator it = headersMap.begin(); it != headersMap.end(); ++it) {
 		hRes.setHeaders(it->first, it->second);
 	}
 

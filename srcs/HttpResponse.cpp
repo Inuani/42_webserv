@@ -18,7 +18,7 @@ std::string	HttpResponse::toString() const {
 	oInt << _status;
 	std::string	int2Str = oInt.str();
 	response += "HTTP/1.1 " + int2Str + " " + getStatusMessage(_status) + "\r\n";
-	for (std::map<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it) {
+	for (std::multimap<std::string, std::string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it) {
 		response += it->first + ": " + it->second + "\r\n";
 	}
 	response += "\r\n";
@@ -37,7 +37,7 @@ const char*	HttpResponse::getStatusMessage(int status) const {
 }
 
 void	HttpResponse::setHeaders(const std::string& key, const std::string& value){
-	_headers[key] = value;
+	_headers.insert(std::make_pair(key, value));
 }
 
 // void HttpResponse::setLocationHeader(const std::string& location) {
