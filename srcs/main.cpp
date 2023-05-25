@@ -1,18 +1,24 @@
 #include "Server.hpp"
-#include "confparser.cpp"
+#include "utils.hpp"
+#include "Settings.h"
 
 int main(int argc, char *argv[])
 {
-	//main_loop();
+	std::vector<Settings> setts;
+	getConfig(setts);
+
 	Serv s;
-	// std::cout << "waiting for connections..." << std::endl;
+	for(std::vector<Settings>::iterator it = setts.begin(); it != setts.end(); it++)
+	{
+		setts_debug(*it);
+		std::vector<Location> locs = it->location;
+		for(std::vector<Location>::iterator it2 = locs.begin(); it2 != locs.end(); it2++)
+			locs_debug(*it2);
+	}
 
-
-
-	s.setAddrinfo();
-	s.bindSocket();
+	s.settings_setter(setts);
+	s.setBindAddrinfo();
 	s.srvListen();
 	s.setEvent();
 
-	// std::cout << "hi";
 }
