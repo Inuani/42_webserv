@@ -18,6 +18,7 @@ public:
 	const std::map<std::string, std::string>&	getHeaders() const;
 	const std::string&							getBody() const;
 	const std::string&							getPathInfo() const;
+	const std::string&							getfileExt() const;
 	const std::string&							getQueryString() const;
 	const std::string							getHeadersValue(const std::string& key) const;
 	const std::string							getQueryValue(const std::string& key) const;

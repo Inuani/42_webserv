@@ -112,16 +112,6 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 	return response;
 }
 
-// const std::string	_pythonCgiHandler(const HttpReqParsing& request) {
-// 	int fd[2];
-// 	if (pipe(fd) < 0) {
-// 		perror("Pipe error");
-// 		return "";
-// 	}
-
-
-// }
-
 const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const std::string& filePath) {
 
 	int fd[2];
@@ -140,14 +130,15 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	}
 
 	std::string cookies = request.getHeadersValue("Cookie");
-	std::vector<char*> env;
+	std::vector<char *> env;
 	env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
-	env.push_back(strdup(("QUERY_STRING=")));
+	env.push_back(strdup(("QUERY_STRING=" + request.getMethod()).c_str()));
 	env.push_back(strdup(("SCRIPT_NAME=" + request.getUri()).c_str())); // do not include query string
 	env.push_back(strdup(("REQUEST_URI=" + request.getUri() + request.getQueryString()).c_str())); // do include query string
 	env.push_back(strdup(("DOCUMENT_ROOT=./www/html"))); // make dynamic !
 	env.push_back(strdup(("SCRIPT_FILENAME=./www/html" + request.getUri()).c_str())); //make dynamic !
 	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
+	env.push_back(strdup(("PATH_INFO=" + request.getPathInfo()).c_str()));
 		// strdup("REMOTE_ADDR=" + request.getClientIP().c_str()), //is it needed sometimes ?
 	env.push_back(strdup(("SERVER_SOFTWARE=WebservGaming/1.0")));
 	env.push_back(strdup(("HTTP_USER_AGENT=" + request.getHeadersValue("User-Agent")).c_str()));
@@ -169,11 +160,14 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	pid_t	pid = fork();
 	if (pid == 0) {
 
-	int bodyFd[2];
-	if (pipe(bodyFd) < 0) {
-		std::cerr << "Pipe Error" << std::endl;
-		std::exit(EXIT_FAILURE);
-	}
+		alarm(10);
+		signal(SIGALRM, exit);
+		
+		int bodyFd[2];
+		if (pipe(bodyFd) < 0) {
+			std::cerr << "Pipe Error" << std::endl;
+			std::exit(EXIT_FAILURE);
+		}
 	
 	if (request.getMethod() == "POST") {
 		std::string contentType = request.getHeadersValue("Content-Type");
@@ -203,6 +197,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 		std::cerr << "fork Error" << std::endl;
 		return "";
 	}
+
 	int status;
 	waitpid(pid, &status, 0);
 
@@ -225,18 +220,20 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	std::istringstream stream(cgiOutput);
 	for (std::string line; std::getline(stream, line);) {
 		if (!inBody) {
-			if (line == "\r") {
+			size_t delim = line.find(":");
+			if (delim == std::string::npos) {
 				inBody = true;
+				body += line + "\n";
 			} else {
-				std::string key = line.substr(0, line.find(":"));
-				std::string value = line.substr(line.find(":") + 2);
+				std::string key = line.substr(0, delim);
+				std::string value = line.substr(delim + 2);
 				headersMap.insert(std::make_pair(key, value));
 			}
 		} else {
 			body += line + "\n";
 		}
 	}
-
+	
 	HttpResponse hRes(200, body);
 	for (std::multimap<std::string, std::string>::const_iterator it = headersMap.begin(); it != headersMap.end(); ++it) {
 		hRes.setHeaders(it->first, it->second);
