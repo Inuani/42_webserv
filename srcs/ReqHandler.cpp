@@ -112,14 +112,34 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 	return response;
 }
 
-const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
+// const std::string	_pythonCgiHandler(const HttpReqParsing& request) {
+// 	int fd[2];
+// 	if (pipe(fd) < 0) {
+// 		perror("Pipe error");
+// 		return "";
+// 	}
+
+
+// }
+
+const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request, const std::string& filePath) {
 
 	int fd[2];
 	if (pipe(fd) < 0) {
 		perror("Pipe error");
 		return "";
 	}
-	char *args[] = {"./cgi-bin/php-cgi", NULL};
+	char *args[] = {NULL, NULL, NULL};
+	if (filePath.substr(filePath.find_last_of(".") + 1) == "py") {
+		args[0] = (char *)"/usr/bin/python3";
+		std::string pythonPath = "./www/html" + request.getUri();
+		args[1] = (char *)pythonPath.c_str();
+		printf("%s\n", args[1]);
+	}
+	else if (filePath.substr(filePath.find_last_of(".") + 1) == "php") {
+		args[0] = (char *)"./cgi-bin/php-cgi";
+	}
+
 	std::string cookies = request.getHeadersValue("Cookie");
 	std::vector<char*> env;
 	env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
@@ -146,7 +166,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		env.push_back(strdup(("HTTP_COOKIE=" + cookies).c_str()));
 	}
 	env.push_back(NULL);
-	
+
 	pid_t	pid = fork();
 	if (pid == 0) {
 
@@ -167,6 +187,7 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 
 		}
 	}
+	
 		dup2(bodyFd[0], STDIN_FILENO);
 		// std::cout << "CONTENT_TYPE: " << request.getHeadersValue("Content-Type") << std::endl;
 		// std::cout << "CONTENT_LENGTH: " << std::to_string(request.getBody().size()) << std::endl;
@@ -174,7 +195,6 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		// close(bodyFd[0]);
 		close(fd[0]);
 		close(fd[1]);
-
 		if (execve(args[0], args, &env[0]) == -1) {
 			std::cerr << "execve failed" << std::endl;
 			std::exit(EXIT_FAILURE);
@@ -184,12 +204,10 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		std::cerr << "fork Error" << std::endl;
 		return "";
 	}
-	
 	int status;
 	waitpid(pid, &status, 0);
 
 	close(fd[1]);
-	
 	std::vector<char> buffer(1024);
 	std::string cgiOutput;
 
@@ -200,7 +218,6 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 		}
 		cgiOutput.append(buffer.begin(), buffer.begin() + n);
 	}
-
 	close(fd[0]);
 	std::multimap<std::string, std::string> headersMap;
 	std::string body;
@@ -236,7 +253,10 @@ const std::string	ReqHandler::_phpCgiHandler(const HttpReqParsing& request) {
 const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
 	std::string filePath = request.getUri();
 	if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "php") {
-		return _phpCgiHandler(request);
+		return _phpCgiHandler(request, filePath);
+	}
+	else if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "py") {
+		return _phpCgiHandler(request, filePath);
 	}
 	else if (request.getMethod() == "GET") {
 		return _getReqHandler(request);

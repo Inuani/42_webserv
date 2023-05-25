@@ -17,6 +17,7 @@ public:
 	const std::string&							getVersion() const;
 	const std::map<std::string, std::string>&	getHeaders() const;
 	const std::string&							getBody() const;
+	const std::string&							getPathInfo() const;
 	const std::string&							getQueryString() const;
 	const std::string							getHeadersValue(const std::string& key) const;
 	const std::string							getQueryValue(const std::string& key) const;
@@ -37,6 +38,8 @@ private:
 	std::map<std::string, std::string>	_headers;
 	std::string							_body;
 	std::string							_queryString;
+	std::string							_pathInfo;
+	std::string							_fileExt;
 	std::map<std::string, std::string>	_queryMap;
 
 };

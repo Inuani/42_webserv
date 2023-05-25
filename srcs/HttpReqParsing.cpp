@@ -39,6 +39,8 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 		_uri = _uri.substr(0, pos);
 	}
 
+	// pos = _uri.find()
+
 	std::cout << "<--------------- start request --------------->" << std::endl;
 	std::cout << _method << " " << _uri << " " << _version << std::endl;	
 	if (!_queryString.empty()) {
@@ -141,6 +143,10 @@ const std::string&	HttpReqParsing::getBody() const {
 
 const std::string&	HttpReqParsing::getQueryString() const {
 	return _queryString;
+}
+
+const std::string&	HttpReqParsing::getPathInfo() const {
+	return _pathInfo;
 }
 
 HttpReqParsing::HttpReqParsing() {}

@@ -70,6 +70,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 	// setcookie("name", $name, time() + (60 * 3), "/");
 	// setcookie("email", $email, time() + (60 * 3), "/");
 
+	// while (1) {}
+	
 	if (empty($name)) {
 		echo "Name is empty <br>";
 	} else {
