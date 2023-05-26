@@ -16,6 +16,11 @@ int main(int argc, char *argv[])
 			locs_debug(*it2);
 	}
 
+	if (setts.empty())
+	{
+		std::cerr << "set a config" << std::endl;
+		exit(1);
+	}
 	s.settings_setter(setts);
 	s.setBindAddrinfo();
 	s.srvListen();

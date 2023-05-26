@@ -39,15 +39,15 @@ bool Serv::hostMatching(std::string host, std::vector<std::string> hosts_conf, i
 	return false;
 }
 
-Settings *Serv::hostMatchingConfigs(void)
+Settings &Serv::hostMatchingConfigs(void)
 {
 	std::string host = getHost(_request); //check if host empty?
 	for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		if (hostMatching(host, miniSplit(it->server_name), it->port))
-			return &(*it);
+			return *it;
 	}
-	return NULL;
+	return _settings.front();
 }
 
 Serv::Serv() {}
@@ -146,6 +146,10 @@ void	Serv::recvAll(int fd)
 			_body.append(buffer, bytesRead);
 		}
 	}
+	else if (_request.find("Transfer-Encoding: chunked") != std::string::npos)
+	{
+
+	}
 }
 
 void	Serv::setBindAddrinfo()
@@ -160,7 +164,7 @@ void	Serv::setBindAddrinfo()
 	std::memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; //whatever ip4 or ip6
 	hints.ai_socktype = SOCK_STREAM; // TCP stream socket (2way connection)
-	hints.ai_flags = AI_PASSIVE | O_NONBLOCK; //localhost ip | nonblocking socket?
+	hints.ai_flags = AI_PASSIVE; //localhost ip
 
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
@@ -181,6 +185,10 @@ void	Serv::setBindAddrinfo()
 			if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &bol,
 					sizeof(int)) == -1)
 				Serv::err("setsockopt");
+
+			if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+				Serv::err("fcntl");
+			}
 
 			if (bind(fd, p->ai_addr, p->ai_addrlen) == -1) {
 				close(fd);
@@ -249,6 +257,7 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
+				activeSockets.erase(fd);
 				close(fd);
 			}
 			else if (sockfd.find(evList[i].ident) != sockfd.end()) {
@@ -258,19 +267,19 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
-				//std::cout << "welcome" << std::endl;
+				activeSockets.insert(fd);
 			}
 			else if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
+				if (activeSockets.find(fd) == activeSockets.end()) {
+					close(fd);
+					continue;
+				}
 				recvAll(fd);
-
-				//std::cout << _request << std::endl;
-				//std::cout << _body << std::endl;
-				//miniSplit(_request);
-				if (hostMatchingConfigs())
-					std::cout << "yey" << std::endl;
-				else
-					std::cout << "nay" << std::endl;
+				// if (hostMatchingConfigs())
+				// 	std::cout << "yey" << std::endl;
+				// else
+				// 	std::cout << "nay" << std::endl;
 
 				HttpReqParsing hReq(_request, _body);
 				ReqHandler reqHandler;

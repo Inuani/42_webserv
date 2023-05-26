@@ -24,20 +24,21 @@
 #include <deque>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "Settings.h"
 #include "HttpReqParsing.hpp"
 
 #define PORT "8080"
 #define BACKLOG 10
-#define NEVENTS 1024
+#define NEVENTS 4096
 
 class Serv
 {
 	private:
 		std::string _request;
 		std::string _body;
-
+		std::set<int> activeSockets;
 		struct addrinfo *_res;
 		std::vector<Settings> _settings;
 		std::map<int, Settings> sockfd;
@@ -58,7 +59,7 @@ class Serv
 
 		std::vector<std::string> miniSplit(std::string toSplit);
 		bool hostMatching(std::string host, std::vector<std::string> hosts_conf, int port);
-		Settings *hostMatchingConfigs();
+		Settings &hostMatchingConfigs();
 		std::string	getHost(std::string);
 		const void	settings_setter(std::vector<Settings> settings);
 };
