@@ -32,6 +32,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	// }
 	requestStream >> _method >> _uri >> _version;
 
+	std::cout << "<--------------- new start --------------->" << std::endl;
 	size_t pos = _uri.find('?');
 	if (pos != std::string::npos) {
 		_queryString = _uri.substr(pos + 1);
@@ -39,7 +40,23 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 		_uri = _uri.substr(0, pos);
 	}
 
-	// pos = _uri.find()
+	pos = _uri.find('.');
+	if (pos != std::string::npos) {
+		_fileExt = _uri.substr(pos + 1);
+		std::cout << _fileExt << std::endl;
+	}
+
+	pos = _fileExt.find('/');
+	if (pos != std::string::npos) {
+		_pathInfo = _fileExt.substr(pos);
+		std::cout << _pathInfo << std::endl;
+		_fileExt = _fileExt.substr(0, pos);
+		std::cout << _fileExt << std::endl;
+		pos = _uri.find(_pathInfo);
+		_uri = _uri.substr(0, pos);
+	}
+	std::cout << _uri << std::endl;
+	std::cout << "<--------------- new end --------------->" << std::endl;
 
 	std::cout << "<--------------- start request --------------->" << std::endl;
 	std::cout << _method << " " << _uri << " " << _version << std::endl;	
@@ -147,6 +164,10 @@ const std::string&	HttpReqParsing::getQueryString() const {
 
 const std::string&	HttpReqParsing::getPathInfo() const {
 	return _pathInfo;
+}
+
+const std::string&	HttpReqParsing::getfileExt() const {
+	return _fileExt;
 }
 
 HttpReqParsing::HttpReqParsing() {}

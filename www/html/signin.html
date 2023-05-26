@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cool Sign In Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #F5F5F5;
+      text-align: center;
+      margin-top: 100px;
+    }
+    h1 {
+      color: #3366FF;
+    }
+    .form-container {
+      width: 300px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #FFFFFF;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #CCCCCC;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button[type="submit"] {
+      background-color: #3366FF;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button[type="submit"]:hover {
+      background-color: #0033CC;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Cool Sign In</h1>
+    <form method="POST">
+      <input type="text" name="username" placeholder="Username" required>
+      <br>
+      <input type="password" name="password" placeholder="Password" required>
+      <br>
+      <input type="password" name="confirm-password" placeholder="Confirm Password" required>
+      <br>
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+</body>
+</html>
