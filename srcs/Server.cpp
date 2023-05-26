@@ -277,10 +277,24 @@ void Serv::handledEvents(int kq)
 			else if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
 				recvAll(fd);
-				HttpReqParsing hReq(_request, _body);
-				ReqHandler reqHandler;
-				std::string response = reqHandler.handleRequest(hReq);
-				sendall(fd, response);
+				try {
+					HttpReqParsing hReq(_request, _body, hostMatchingConfigs());
+					ReqHandler reqHandler(hostMatchingConfigs());
+					std::string response = reqHandler.handleRequest(hReq);
+					sendall(fd, response);
+				} catch (const std::runtime_error& e) {
+					std::cout << e.what() << std::endl;
+
+					int errorStatus;
+					std::istringstream errS(e.what());
+					if (!(errS >> errorStatus)) {
+						errorStatus = 404;
+					}
+					std::string errorBody = e.what();
+					HttpResponse errRes(errorStatus, errorBody);
+					std::string response = errRes.toString();
+					sendall(fd, response);
+				}
 				close(fd);
 			}
 		}

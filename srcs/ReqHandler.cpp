@@ -10,11 +10,11 @@
 #include <fcntl.h>
 
 ReqHandler::ReqHandler() {}
+ReqHandler::ReqHandler(const Settings& settings) : _settings(settings) {}
 
 const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
-	//std::string filePath = request.getUri();
-	std::string filePath = "www/html";
-	std::string defaultFile = "/index.html";
+	std::string filePath = _settings.root;
+	std::string defaultFile = '/' + _settings.index;
 	if (request.getQueryString().find("file") != std::string::npos) {
 		filePath.append("/" + request.getQueryValue("file"));
 	} else if (request.getUri() == "/")
@@ -25,7 +25,7 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	HttpResponse hRes(getResponseCode(filePath), body);
 	hRes.setHeaders("Content-Type", getFileType(filePath));
 	std::string response = hRes.toString();
-	// std::cout << response << std::endl;
+
 	return response;
 }
 
@@ -122,7 +122,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	char *args[] = {NULL, NULL, NULL};
 	if (filePath.substr(filePath.find_last_of(".") + 1) == "py") {
 		args[0] = (char *)"/usr/bin/python3";
-		std::string pythonPath = "./www/html" + request.getUri();
+		std::string pythonPath = _settings.root + request.getUri();
 		args[1] = (char *)pythonPath.c_str();
 	}
 	else if (filePath.substr(filePath.find_last_of(".") + 1) == "php") {
@@ -170,15 +170,15 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 		}
 	
 	if (request.getMethod() == "POST") {
-		std::string contentType = request.getHeadersValue("Content-Type");
-		if (contentType.find("application/x-www-form-urlencoded") != std::string::npos) {
+		// std::string contentType = request.getHeadersValue("Content-Type");
+		// if (contentType.find("application/x-www-form-urlencoded") != std::string::npos) {
 			// std::cout << request.getBody() << std::endl;
 			write(bodyFd[1], request.getBody().c_str(), request.getBody().size());
 			close(bodyFd[1]);
-		}
-		else if (contentType.find("multipart/form-data") != std::string::npos) {
+		// }
+		// else if (contentType.find("multipart/form-data") != std::string::npos) {
 
-		}
+		// }
 	}
 	
 		dup2(bodyFd[0], STDIN_FILENO);
@@ -217,6 +217,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	std::string body;
 	bool inBody = false;
 
+	std::cout << cgiOutput << std::endl;
 	std::istringstream stream(cgiOutput);
 	for (std::string line; std::getline(stream, line);) {
 		if (!inBody) {

@@ -7,11 +7,12 @@ HttpReqParsing::HttpReqParsing(const std::string& strHttpRequest) {
 	_parseHeader(strHttpRequest);
 }
 
-HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& strBody) : _body(strBody)
+HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& strBody, const Settings& settings) 
+	: _body(strBody), _settings(settings)
 {
 	_parseHeader(strHeader);
 	std::cout << std::endl;
-	std::cout << _body << std::endl;
+	// std::cout << _body << std::endl;
 	std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
@@ -32,7 +33,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	// }
 	requestStream >> _method >> _uri >> _version;
 
-	std::cout << "<--------------- new start --------------->" << std::endl;
+	// std::cout << "<--------------- new start --------------->" << std::endl;
 	size_t pos = _uri.find('?');
 	if (pos != std::string::npos) {
 		_queryString = _uri.substr(pos + 1);
@@ -43,20 +44,25 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	pos = _uri.find('.');
 	if (pos != std::string::npos) {
 		_fileExt = _uri.substr(pos + 1);
-		std::cout << _fileExt << std::endl;
+		// std::cout << _fileExt << std::endl;
 	}
 
 	pos = _fileExt.find('/');
 	if (pos != std::string::npos) {
 		_pathInfo = _fileExt.substr(pos);
-		std::cout << _pathInfo << std::endl;
+		// std::cout << _pathInfo << std::endl;
 		_fileExt = _fileExt.substr(0, pos);
-		std::cout << _fileExt << std::endl;
+		// std::cout << _fileExt << std::endl;
 		pos = _uri.find(_pathInfo);
 		_uri = _uri.substr(0, pos);
 	}
-	std::cout << _uri << std::endl;
-	std::cout << "<--------------- new end --------------->" << std::endl;
+	// std::cout << _uri << std::endl;
+	// std::cout << "<--------------- new end --------------->" << std::endl;
+
+	// if (_setting.location.method.find(_method) == std::string::npos) {
+	// 	// 405 Method Not Allowed
+	// 	throw std::runtime_error("405");
+	// }
 
 	std::cout << "<--------------- start request --------------->" << std::endl;
 	std::cout << _method << " " << _uri << " " << _version << std::endl;	
@@ -72,8 +78,6 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
         // }
 		std::getline(headerStream, key, ':');
 		key.erase(key.find_last_not_of(" \n\r\t")+1);
-		// headerStream >> value;
-		// headerStream.ignore(1); //caution
 		std::getline(headerStream, value);
 		size_t start = value.find_first_not_of(" \n\r\t");
         if (start != std::string::npos) {

@@ -10,4 +10,6 @@ echo '<!DOCTYPE html>
 		</body how to get data from a database and show it on a website.
 		</body>
 </html>';
+
+// while(1) {}
 ?>

@@ -12,12 +12,13 @@ NAME		= webserv
 
 # FOLDERS & FILES
 SRC_DIR		= ./srcs/
-SRC_FILES	=	main.old.cpp \
+SRC_FILES	=	main.cpp \
 				HttpReqParsing.cpp \
 				HttpResponse.cpp \
 				ReqHandler.cpp \
 				utils.cpp \
 				Server.cpp \
+				confParser.cpp
 
 
 OBJ_DIR		= ./objs/

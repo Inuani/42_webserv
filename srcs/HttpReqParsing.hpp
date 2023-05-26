@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include "Settings.h"
 
 #ifndef HTTPREQPARSING_HPP
 # define HTTPREQPARSING_HPP
@@ -7,8 +8,8 @@
 class HttpReqParsing {
 
 public:
-
-	HttpReqParsing(const std::string& strHeader, const std::string& strBody);
+	HttpReqParsing(const std::string& strHeader, const std::string& strBody, const Settings& settings);
+	// HttpReqParsing(const std::string& strHeader, const std::string& strBody);
 	HttpReqParsing(const std::string& strHttpRequest);
 	~HttpReqParsing();
 
@@ -42,6 +43,7 @@ private:
 	std::string							_pathInfo;
 	std::string							_fileExt;
 	std::map<std::string, std::string>	_queryMap;
+	Settings							_settings;
 
 };
 
