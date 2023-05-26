@@ -65,21 +65,38 @@ void	Serv::err(std::string msg)
 	std::cerr << msg << std::endl;
 }
 
-void	Serv::sendall(int fd, std::string msg)
+bool isAvailable(int fd)
+{
+	ssize_t bytesRead;
+	char buffer;
+	bytesRead = read(fd, &buffer, 0);
+		if (bytesRead < 0)
+			return false;
+	return true;
+}
+
+bool	Serv::sendall(int fd, std::string msg)
 {
 	size_t total = 0;
 	size_t len = msg.size();
 	ssize_t n;
 
 	while (total < len) {
+		if (!isAvailable(fd))
+			return false;
 		n = send(fd, msg.c_str() + total, len - total, 0);
 		if (n == -1)
+		{
+			std::cout << strerror(errno) << n << std::endl; //...
 			continue;
+		}
 		total += n;
 	}
 	if (total != len) {
 		std::cout << "Error: sendall - Incomplete data sent" << std::endl;
+		return false;
 	}
+	return true;
 }
 
 std::string	Serv::getHost(std::string header)
@@ -129,7 +146,8 @@ void	Serv::recvAll(int fd)
 
 	if (bytesRead == -1) {
 		std::cerr << "Error in recv: " << strerror(errno) << std::endl;
-		close(fd);
+		if (isAvailable(fd))
+			close(fd);
 		return;
 	}
 
@@ -152,10 +170,6 @@ void	Serv::recvAll(int fd)
 		{
 			_body.append(buffer, bytesRead);
 		}
-	}
-	else if (_request.find("Transfer-Encoding: chunked") != std::string::npos)
-	{
-
 	}
 }
 
@@ -242,6 +256,7 @@ void Serv::setEvent()
 	handledEvents(kq);
 }
 
+
 void Serv::handledEvents(int kq)
 {
 	//std::map<int, Settings>::iterator it;
@@ -277,11 +292,26 @@ void Serv::handledEvents(int kq)
 			else if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
 				recvAll(fd);
-				HttpReqParsing hReq(_request, _body);
-				ReqHandler reqHandler;
-				std::string response = reqHandler.handleRequest(hReq);
-				sendall(fd, response);
-				close(fd);
+				try {
+					HttpReqParsing hReq(_request, _body, hostMatchingConfigs());
+					ReqHandler reqHandler(hostMatchingConfigs());
+					std::string response = reqHandler.handleRequest(hReq);
+					sendall(fd, response);
+				} catch (const std::runtime_error& e) {
+					std::cout << e.what() << std::endl;
+
+					int errorStatus;
+					std::istringstream errS(e.what());
+					if (!(errS >> errorStatus)) {
+						errorStatus = 404;
+					}
+					std::string errorBody = e.what();
+					HttpResponse errRes(errorStatus, errorBody);
+					std::string response = errRes.toString();
+					sendall(fd, response);
+				} 
+				if (isAvailable(fd))
+					close(fd);
 			}
 		}
 	}
