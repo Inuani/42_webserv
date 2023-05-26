@@ -38,7 +38,6 @@ class Serv
 	private:
 		std::string _request;
 		std::string _body;
-		std::set<int> activeSockets;
 		struct addrinfo *_res;
 		std::vector<Settings> _settings;
 		std::map<int, Settings> sockfd;

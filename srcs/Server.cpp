@@ -67,18 +67,19 @@ void	Serv::err(std::string msg)
 
 void	Serv::sendall(int fd, std::string msg)
 {
-	int total = 0;
-	int len = msg.size();
-	int n;
+	size_t total = 0;
+	size_t len = msg.size();
+	ssize_t n;
 
-	while(total < len) {
-		n = send(fd, msg.c_str(), msg.size(), 0);
-		if (n == -1) { break; }
+	while (total < len) {
+		n = send(fd, msg.c_str() + total, len - total, 0);
+		if (n == -1)
+			continue;
 		total += n;
-		msg.erase(0, n);
 	}
-	if (n == -1)
-		std::cout << "Error: sendall" << std::endl;
+	if (total != len) {
+		std::cout << "Error: sendall - Incomplete data sent" << std::endl;
+	}
 }
 
 std::string	Serv::getHost(std::string header)
@@ -125,7 +126,13 @@ void	Serv::recvAll(int fd)
 		if (_request.find("\r\n\r\n") != std::string::npos)
 			break;
 	}
-	
+
+	if (bytesRead == -1) {
+		std::cerr << "Error in recv: " << strerror(errno) << std::endl;
+		close(fd);
+		return;
+	}
+
 	if (_request.find("Content-Length") != std::string::npos)
 	{
 		//split the _request to get the _body
@@ -164,7 +171,7 @@ void	Serv::setBindAddrinfo()
 	std::memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC; //whatever ip4 or ip6
 	hints.ai_socktype = SOCK_STREAM; // TCP stream socket (2way connection)
-	hints.ai_flags = AI_PASSIVE; //localhost ip
+	hints.ai_flags = AI_PASSIVE | O_NONBLOCK; //localhost ip | nonblocking socket?
 
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
@@ -257,7 +264,6 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
-				activeSockets.erase(fd);
 				close(fd);
 			}
 			else if (sockfd.find(evList[i].ident) != sockfd.end()) {
@@ -267,20 +273,10 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
-				activeSockets.insert(fd);
 			}
 			else if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
-				if (activeSockets.find(fd) == activeSockets.end()) {
-					close(fd);
-					continue;
-				}
 				recvAll(fd);
-				// if (hostMatchingConfigs())
-				// 	std::cout << "yey" << std::endl;
-				// else
-				// 	std::cout << "nay" << std::endl;
-
 				HttpReqParsing hReq(_request, _body);
 				ReqHandler reqHandler;
 				std::string response = reqHandler.handleRequest(hReq);
@@ -290,83 +286,3 @@ void Serv::handledEvents(int kq)
 		}
 	}
 }
-
-
-// void Serv::handledEvents(int kq)
-// {
-// 	//std::map<int, Settings>::iterator it;
-// 	std::deque<int> uc;
-// 	std::deque<int>::iterator itr;
-// 	char _request[1024];
-// 	struct kevent evList[NEVENTS];
-// 	struct kevent evSet;
-// 	struct sockaddr_storage addr;
-// 	socklen_t socklen = sizeof(addr);
-// 	int nev, i;
-// 	int fd = 0;
-
-// 	while (true) {
-// 		nev = kevent(kq, NULL, 0, evList, NEVENTS, NULL);
-// 		if (nev < 0)
-// 			Serv::err("kevent");
-		
-// 		for (i = 0; i < nev; i++) {
-// 			if (evList[i].flags & EV_EOF) {
-// 				std::cout << "disconnect\n" << std::endl;
-// 				fd = evList[i].ident;
-// 				EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-// 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-// 					Serv::err("kevent");
-				
-// 				itr = find(uc.begin(), uc.end(), fd);
-// 				if (itr != uc.end()) {
-// 					uc.erase(itr);
-// 					for (std::deque<int>::iterator iter = uc.begin(); iter != uc.end(); ++iter)
-// 						std::cout << *iter << std::endl;
-// 				}
-// 				// Close the file descriptor
-// 				close(fd);
-// 			}
-// 			else if (sockfd.find(evList[i].ident) != sockfd.end()) {
-// 				fd = accept(evList[i].ident, (struct sockaddr *)&addr, &socklen);
-// 				if (fd == -1)
-// 					Serv::err("accept");
-				
-// 				itr = find(uc.begin(), uc.end(), fd);
-// 				if (itr == uc.end()) {
-// 					uc.push_back(fd);
-// 					EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
-// 					if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-// 						Serv::err("kevent");
-// 					std::cout << "welcome" << std::endl;
-// 				} else {
-// 					std::cout << "connection refused" << std::endl;
-// 					// Close the file descriptor
-// 					close(fd);
-// 				}
-				
-// 				// Print the active connections
-// 				// for (std::deque<int>::iterator iter = uc.begin(); iter != uc.end(); ++iter)
-// 				// 	std::cout << "hi " << *iter << std::endl;
-// 			}
-// 			else if (evList[i].filter == EVFILT_READ) {
-// 				memset(_request, 0, sizeof(_request));
-// 				fd = evList[i].ident;
-// 				recv(fd, _request, sizeof(_request), 0); // use recvall
-// 				//std::cout << "adsadasdasdasdssadsadsaasd\n" << _request << "adsadasdasdasdssadsadsaasd\n" << std::endl;
-// 				HttpReqParsing hReq(_request);
-
-// 				ReqHandler reqHandler;
-// 				std::string response = reqHandler.handleRequest(hReq);
-// 				sendall(fd, response);
-// 				//send(fd, response.c_str(), response.size(), 0);
-// 				std::cout << "sending" << std::endl;
-				
-// 				// Clear the connection deque and close the file descriptor
-// 				uc.clear();
-// 				close(fd);
-// 			}
-// 		}
-// 	}
-// }
-
