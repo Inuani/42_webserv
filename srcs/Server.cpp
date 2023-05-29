@@ -87,7 +87,7 @@ bool	Serv::sendall(int fd, std::string msg)
 		n = send(fd, msg.c_str() + total, len - total, 0);
 		if (n == -1)
 		{
-			std::cout << strerror(errno) << n << std::endl; //...
+			// std::cout << strerror(errno) << n << std::endl; //...
 			continue;
 		}
 		total += n;
@@ -121,7 +121,7 @@ bool	Serv::maxBodyTooSmall(int contentLen)
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		ss << it->port;
-		std::cout << "HOST NAME " << it->server_name + ":" + ss.str() << std::endl;
+		// std::cout << "HOST NAME " << it->server_name + ":" + ss.str() << std::endl;
 		if (it->server_name.append(":" + ss.str()) == host
 				&& it->max_body && it->max_body < contentLen)
 		{
@@ -296,20 +296,15 @@ void Serv::handledEvents(int kq)
 					HttpReqParsing hReq(_request, _body, hostMatchingConfigs());
 					ReqHandler reqHandler(hostMatchingConfigs());
 					std::string response = reqHandler.handleRequest(hReq);
+					// std::cout << response << std::endl;
 					sendall(fd, response);
-				} catch (const std::runtime_error& e) {
-					std::cout << e.what() << std::endl;
-
-					int errorStatus;
-					std::istringstream errS(e.what());
-					if (!(errS >> errorStatus)) {
-						errorStatus = 404;
-					}
-					std::string errorBody = e.what();
+				} catch (int errorStatus) {
+					// std::cout << errorStatus << std::endl;
+					std::string errorBody = "404";
 					HttpResponse errRes(errorStatus, errorBody);
 					std::string response = errRes.toString();
 					sendall(fd, response);
-				} 
+				}
 				if (isAvailable(fd))
 					close(fd);
 			}

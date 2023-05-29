@@ -2,6 +2,7 @@
 #include "HttpReqParsing.hpp"
 #include "HttpResponse.hpp"
 #include "Settings.h"
+#include "utils.hpp"
 
 #ifndef REQHANDLER_HPP
 # define REQHANDLER_HPP
@@ -20,7 +21,7 @@ private:
 	ReqHandler(const ReqHandler& src);
 	ReqHandler& operator=(const ReqHandler& rhs);
 
-	const std::string	_cgiHandler(const HttpReqParsing& request, const std::string& filePath);
+	const std::string	_cgiHandler(const HttpReqParsing& request, const std::string& filePath, const Location *location);
 	const std::string	_getReqHandler(const HttpReqParsing& request);
 	const std::string	_postReqHandler(const HttpReqParsing& request);
 	const std::string	_deleteReqHandler(const HttpReqParsing& request);

@@ -1,6 +1,8 @@
 #include <iostream>
 #include <map>
 #include "Settings.h"
+#include "utils.hpp"
+
 
 #ifndef HTTPREQPARSING_HPP
 # define HTTPREQPARSING_HPP
@@ -48,3 +50,4 @@ private:
 };
 
 #endif
+

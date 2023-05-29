@@ -12,7 +12,8 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 {
 	_parseHeader(strHeader);
 	std::cout << std::endl;
-	// std::cout << _body << std::endl;
+	std::cout << "<--------------- start body --------------->" << std::endl;
+	std::cout << _body << std::endl;
 	std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
@@ -28,9 +29,6 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	std::getline(parseStream, line);
 	std::istringstream requestStream(line);
 
-	// if (!(requestStream >> _method >> _uri >> _version)) {
-	//		throw std::invalid_argument("Invalid HTTP request: malformed request line");
-	// }
 	requestStream >> _method >> _uri >> _version;
 
 	// std::cout << "<--------------- new start --------------->" << std::endl;
@@ -59,22 +57,25 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	// std::cout << _uri << std::endl;
 	// std::cout << "<--------------- new end --------------->" << std::endl;
 
-	// if (_setting.location.method.find(_method) == std::string::npos) {
+	
+
+	// Location *location = findLocationByPath(_settings, );
+	// if (location != NULL && location->methods.find() == std::string::npos) {
 	// 	// 405 Method Not Allowed
-	// 	throw std::runtime_error("405");
+	// 	throw 405;
 	// }
 
-	std::cout << "<--------------- start request --------------->" << std::endl;
-	std::cout << _method << " " << _uri << " " << _version << std::endl;	
-	if (!_queryString.empty()) {
-		std::cout << "query string : " << _queryString << std::endl;	
-	}
+	// std::cout << "<--------------- start request --------------->" << std::endl;
+	// std::cout << _method << " " << _uri << " " << _version << std::endl;	
+	// if (!_queryString.empty()) {
+	// 	std::cout << "query string : " << _queryString << std::endl;	
+	// }
 
 	while (std::getline(parseStream, line) && line != "\r") {
 		std::istringstream headerStream(line);
 		std::string key, value;
 		// if (!std::getline(headerStream, key, ':')) {
-        //     throw std::invalid_argument("Invalid HTTP request: malformed header line");
+        //     throw ...
         // }
 		std::getline(headerStream, key, ':');
 		key.erase(key.find_last_not_of(" \n\r\t")+1);
@@ -85,7 +86,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
         }
 		value.erase(value.find_last_not_of(" \n\r\t") + 1);
 		_headers[key] = value;
-		std::cout << key << " : " << value << std::endl;
+		// std::cout << key << " : " << value << std::endl;
 	}
 }
 
