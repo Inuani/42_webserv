@@ -1,5 +1,6 @@
 .vscode
 /objs/*
+/data/*
 *deprecated*
 webserv
 tester
