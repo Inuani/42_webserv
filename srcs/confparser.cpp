@@ -12,22 +12,22 @@
 
 void setts_debug(struct Settings settings)
 {
-	std::cout << settings.port << std::endl;
-	std::cout << settings.max_body << std::endl;
-	std::cout << settings.err_pages << std::endl;
-	std::cout << settings.server_name << std::endl;
-	std::cout << settings.root << std::endl;
-	std::cout << settings.index << std::endl;
-	//std::cout << settings. << std::endl;
+	// std::cout << settings.port << std::endl;
+	// std::cout << settings.max_body << std::endl;
+	// std::cout << settings.err_pages << std::endl;
+	// std::cout << settings.server_name << std::endl;
+	// std::cout << settings.root << std::endl;
+	// std::cout << settings.index << std::endl;
+	// std::cout << settings. << std::endl;
 }
 
 void locs_debug(struct Location location)
 {
-	std::cout << location.path << std::endl;
-	std::cout << location.root << std::endl;
-	std::cout << location.index << std::endl;
-	std::cout << location.methods << std::endl;
-	std::cout << location.err_pages << std::endl;
+	// std::cout << location.path << std::endl;
+	// std::cout << location.root << std::endl;
+	// std::cout << location.index << std::endl;
+	// std::cout << location.methods << std::endl;
+	// std::cout << location.err_pages << std::endl;
 }
 
 //max_body must be 0
