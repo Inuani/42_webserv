@@ -12,39 +12,43 @@
 
 void setts_debug(struct Settings settings)
 {
-	// std::cout << settings.port << std::endl;
-	// std::cout << settings.max_body << std::endl;
-	// std::cout << settings.err_pages << std::endl;
-	// std::cout << settings.server_name << std::endl;
-	// std::cout << settings.root << std::endl;
-	// std::cout << settings.index << std::endl;
-	// std::cout << settings. << std::endl;
+	std::cout << settings.port << std::endl;
+	std::cout << settings.max_body << std::endl;
+	std::cout << settings.error << std::endl;
+	std::cout << settings.server_name << std::endl;
+	std::cout << settings.root << std::endl;
+	std::cout << settings.index << std::endl;
+	//std::cout << settings. << std::endl;
 }
 
 void locs_debug(struct Location location)
 {
-	// std::cout << location.path << std::endl;
-	// std::cout << location.root << std::endl;
-	// std::cout << location.index << std::endl;
-	// std::cout << location.methods << std::endl;
-	// std::cout << location.err_pages << std::endl;
+	std::cout << location.path << std::endl;
+	std::cout << location.root << std::endl;
+	std::cout << location.index << std::endl;
+	std::cout << location.methods << std::endl;
+	std::cout << location.error << std::endl;
+	std::cout << location.ext << std::endl;
+	std::cout << location.dir_listing << std::endl;
 }
 
 //max_body must be 0
 void default_sett(struct Settings &settings)
 {
-	settings.port = 8080;
+	settings.port = 0;
 	settings.max_body = 0;
-	settings.err_pages = "";
+	//settings.error = "";
 }
 
 void default_loc(struct Location &location)
 {
-	location.path = "/";
-	location.root = "www/html";
-	location.index = "index.html";
-	location.methods = "GET,POST,DELETE,PUT";
-	location.err_pages = "";
+	// location.dir_listing = "";
+	// location.ext = "";
+	// location.path = "";
+	// location.root = "";
+	// location.index = "";
+	// location.methods = "";
+	// location.error = "";
 }
 
 Location create_location(std::stringstream &file, std::string path)
@@ -67,6 +71,20 @@ Location create_location(std::stringstream &file, std::string path)
 			else if(line == "index") {
 				ssline >> word;
 				location.index = word;
+			}
+			else if(line == "ext") {
+				while(ssline >> line)
+					word += line;
+				location.ext = word;
+			}
+			else if(line == "error") {
+				while(ssline >> line)
+					word += line;
+				location.error = word;
+			}
+			else if(line == "dir_listing") {
+				ssline >> word;
+				location.dir_listing = word;
 			}
 			else if(line == "methods") {
 				while(ssline >> line)
@@ -103,6 +121,15 @@ Settings create_settings(std::stringstream &file)
 			else if (line == "index") {
 				ssline >> word;
 				settings.index = word;
+			}
+			else if (line == "error") {
+				while(ssline >> line)
+					word += line;
+				settings.error = word;
+			}
+			else if (line == "dir_listing") {
+				ssline >> word;
+				settings.dir_listing = word;
 			}
 			if (line == "listen") {
 				ssline >> number;

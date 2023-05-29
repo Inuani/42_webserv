@@ -39,9 +39,9 @@ bool Serv::hostMatching(std::string host, std::vector<std::string> hosts_conf, i
 	return false;
 }
 
-Settings &Serv::hostMatchingConfigs(void)
+Settings &Serv::hostMatchingConfigs(std::string request)
 {
-	std::string host = getHost(_request); //check if host empty?
+	std::string host = getHost(request); //check if host empty?
 	for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		if (hostMatching(host, miniSplit(it->server_name), it->port))
@@ -90,63 +90,60 @@ std::string	Serv::getHost(std::string header)
 	return "";
 }
 
-bool	Serv::maxBodyTooSmall(int contentLen)
+bool	Serv::maxBodyTooSmall(int contentLen, std::string request)
 {
 	std::stringstream ss;
-	std::string host = getHost(_request);
+	std::string host = getHost(request);
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
+		ss.str(std::string());
 		ss << it->port;
-		std::cout << "HOST NAME " << it->server_name + ":" + ss.str() << std::endl;
-		if (it->server_name + ":" + ss.str() == host
-				&& it->max_body && it->max_body < contentLen)
+		//std::cout << "HOST NAME: " << it->server_name + ":" + ss.str() << std::endl;
+		// std::cout << "HOST: " << host << std::endl;
+		// std::cout << "content len: " << contentLen << std::endl;
+		// std::cout << "max_body: " << it->max_body << std::endl;
+		for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 		{
-			return false;
+			if ((hostMatching(host, miniSplit(it->server_name), it->port))
+					&& it->max_body && it->max_body < contentLen)
+			{
+				return false;
+			}
 		}
 	}
 	return true;
 }
 
-//this code is ugly AF
-void	Serv::recvAll(int fd)
+bool	Serv::recvAll(int fd, std::string &request, std::string &body)
 {
-	_request = "";
-	_body = "";
-	char buffer[1024];
-	ssize_t bytesRead;
-	while ((bytesRead = recv(fd, buffer, sizeof(buffer), 0)) > 0) {
-		_request.append(buffer, bytesRead);
-		if (_request.find("\r\n\r\n") != std::string::npos)
-			break;
-	}
-
-	if (bytesRead == -1) {
-		std::cerr << "Error in recv: " << strerror(errno) << std::endl;
-		if (isAvailable(fd))
-			close(fd);
-		return;
-	}
-
-	if (_request.find("Content-Length") != std::string::npos)
+	char buffer[1024] = "";
+	int bytesRead;
+	bytesRead = recv(fd, buffer, sizeof(buffer), 0);
+	request.append(buffer, bytesRead);
+	//std::cout << request << std::endl;
+	if (request.find("\r\n\r\n") != std::string::npos)
 	{
-		//split the _request to get the _body
-		if (_request.find("\r\n\r\n") + 4 != std::string::npos)
+		if (request.find("POST") != std::string::npos)
 		{
-			_body = _request.substr(_request.find("\r\n\r\n") + 4, std::string::npos);
-			_request.erase(_request.find("\r\n\r\n", + 4), std::string::npos);
+			if (request.find("Content-Length") == std::string::npos)
+				throw 411;
+			else
+			{
+				if (!maxBodyTooSmall(getContentLen(request), request))
+					throw 413;
+				size_t bodyStartIndex = request.find("\r\n\r\n") + 4;
+				body += request.substr(bodyStartIndex, std::string::npos);
+				request.erase(bodyStartIndex, std::string::npos);
+
+				// Check if the entire body has been received
+				if (body.size() >= getContentLen(request))
+					return true;
+			}
 		}
-		int contentLength = getContentLen(_request);
-		if (!maxBodyTooSmall(contentLength))
-		{
-			exit(1);
-			std::cout << std::endl << std::endl << std::endl << "ALAIDDDD " << std::endl << std::endl << std::endl << std::endl;
-		}
-		// Maybe use || instead of &&
-		while (_body.size() < contentLength && (bytesRead = recv(fd, buffer, sizeof(buffer), 0)) > 0)
-		{
-			_body.append(buffer, bytesRead);
-		}
+		else
+			return true;
 	}
+	return false;
 }
 
 void	Serv::setBindAddrinfo()
@@ -236,6 +233,7 @@ void Serv::setEvent()
 void Serv::handledEvents(int kq)
 {
 	std::map<int, std::string> test;
+	std::map<int, struct sRequest> test2;
 	std::deque<int>::iterator itr;
 	struct kevent evList[NEVENTS];
 	struct kevent evSet;
@@ -255,6 +253,9 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
+				EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+					Serv::err("kevent");
 				close(fd);
 			}
 			if (sockfd.find(evList[i].ident) != sockfd.end()) {
@@ -268,29 +269,39 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
+				
+				struct sRequest req;
+				test2[fd] = req;
 			}
 			if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
-				if (isAvailable(fd))
-					recvAll(fd);
-				std::string response;
-				try {
-					HttpReqParsing hReq(_request, _body, hostMatchingConfigs());
-					ReqHandler reqHandler(hostMatchingConfigs());
-					response = reqHandler.handleRequest(hReq);
-				} catch (const std::runtime_error& e) {
-					std::cout << e.what() << std::endl;
-
-					int errorStatus;
-					std::istringstream errS(e.what());
-					if (!(errS >> errorStatus)) {
-						errorStatus = 404;
+				// if (!isAvailable(fd))
+				// 	continue ;
+				if (test2.find(fd) != test2.end() && isAvailable(fd) && recvAll(fd, test2[fd].request, test2[fd].body))
+				{
+					// std::cout << test2[fd].request << std::endl;
+					// std::cout << test2[fd].body << std::endl;
+					std::string response;
+					//std::cout << _body << std::endl;
+					try {
+						HttpReqParsing hReq(test2[fd].request, test2[fd].body, hostMatchingConfigs(test2[fd].request));
+						ReqHandler reqHandler(hostMatchingConfigs(test2[fd].request));
+						response = reqHandler.handleRequest(hReq);
+					} catch (const std::exception &e) {
+						//std::cout << e.what() << std::endl;
+						int errorStatus;
+						std::istringstream errS(e.what());
+						if (!(errS >> errorStatus)) {
+							errorStatus = 404;
+						}
+						std::string errorBody = e.what();
+						HttpResponse errRes(errorStatus, errorBody);
+						response = errRes.toString();
 					}
-					std::string errorBody = e.what();
-					HttpResponse errRes(errorStatus, errorBody);
-					response = errRes.toString();
+					test[fd] = response;
+					test2[fd].request = "";
+					test2[fd].body = "";
 				}
-				test[fd] = response;
 				//std::cout << response << std::endl;
 			}
 			if (evList[i].filter == EVFILT_WRITE)

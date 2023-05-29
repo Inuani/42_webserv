@@ -33,10 +33,16 @@
 #define BACKLOG 1024
 #define NEVENTS 4096
 
+struct sRequest
+{
+	std::string request;
+	std::string body;
+};
+
 class Serv
 {
 	private:
-		std::string _request;
+		//std::string _request;
 		std::string _body;
 		struct addrinfo *_res;
 		std::vector<Settings> _settings;
@@ -53,12 +59,12 @@ class Serv
 		void		srvListen();
 		void		setEvent();
 		void		handledEvents(int kq);
-		void		recvAll(int fd);
-		bool		maxBodyTooSmall(int);
+		bool		recvAll(int fd, std::string &, std::string &);
+		bool		maxBodyTooSmall(int, std::string);
 
 		std::vector<std::string> miniSplit(std::string toSplit);
 		bool hostMatching(std::string host, std::vector<std::string> hosts_conf, int port);
-		Settings &hostMatchingConfigs();
+		Settings &hostMatchingConfigs(std::string);
 		std::string	getHost(std::string);
 		const void	settings_setter(std::vector<Settings> settings);
 };
