@@ -10,22 +10,25 @@
 #include <fcntl.h>
 
 ReqHandler::ReqHandler() {}
+
 ReqHandler::ReqHandler(const Settings& settings) : _settings(settings) {}
 
 const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	std::string filePath = _settings.root;
-	std::string defaultFile = '/' + _settings.index;
+	// std::cout << _settings.index << std::endl;
+	std::string defaultFile = _settings.index;
+	// std::cout << defaultFile << std::endl;
 	if (request.getQueryString().find("file") != std::string::npos) {
 		filePath.append("/" + request.getQueryValue("file"));
 	} else if (request.getUri() == "/")
 		filePath.append(defaultFile);
-	else
+	else {
 		filePath.append(request.getUri());
+	}
 	std::string body = readFileContent(filePath);
 	HttpResponse hRes(getResponseCode(filePath), body);
 	hRes.setHeaders("Content-Type", getFileType(filePath));
 	std::string response = hRes.toString();
-
 	return response;
 }
 
@@ -59,8 +62,10 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 	}
 	else if (contentType.find("multipart/form-data") != std::string::npos) {
 
-		//std::string boundary = request.getBody().substr(0, 40); //caution
+		// std::string boundary = request.getBody().substr(0, 40); //caution
 		std::string boundary = contentType.substr(contentType.find("boundary=") + 9, contentType.size() - 10 - contentType.find("boundary="));
+		std::cout << boundary << std::endl;
+		std::cout << request.getBody() << std::endl;
 		std::string content = request.getBody().substr(request.getBody().find("\r\n\r\n") + 4, std::string::npos);
 		content.erase(content.find(boundary), std::string::npos);
 
@@ -100,6 +105,8 @@ const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
 		hRes.setHeaders("Location", "/success.html");
 		return hRes.toString();
 	}
+	// throw 404;
+	// return "";
 	HttpResponse hRes(404, "Error");
 	hRes.setHeaders("Content-Type", "text/plain");
 	return hRes.toString();
@@ -112,8 +119,7 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 	return response;
 }
 
-const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const std::string& filePath) {
-
+const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const std::string& filePath, const Location *location) {
 	int fd[2];
 	if (pipe(fd) < 0) {
 		perror("Pipe error");
@@ -122,7 +128,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	char *args[] = {NULL, NULL, NULL};
 	if (filePath.substr(filePath.find_last_of(".") + 1) == "py") {
 		args[0] = (char *)"/usr/bin/python3";
-		std::string pythonPath = _settings.root + request.getUri();
+		std::string pythonPath = location->root + request.getUri();
 		args[1] = (char *)pythonPath.c_str();
 	}
 	else if (filePath.substr(filePath.find_last_of(".") + 1) == "php") {
@@ -135,8 +141,8 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	env.push_back(strdup(("QUERY_STRING=" + request.getMethod()).c_str()));
 	env.push_back(strdup(("SCRIPT_NAME=" + request.getUri()).c_str())); // do not include query string
 	env.push_back(strdup(("REQUEST_URI=" + request.getUri() + request.getQueryString()).c_str())); // do include query string
-	env.push_back(strdup(("DOCUMENT_ROOT=./www/html"))); // make dynamic !
-	env.push_back(strdup(("SCRIPT_FILENAME=./www/html" + request.getUri()).c_str())); //make dynamic !
+	env.push_back(strdup(("DOCUMENT_ROOT=" + location->root).c_str()));
+	env.push_back(strdup(("SCRIPT_FILENAME=" + location->root + request.getUri()).c_str()));
 	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
 	env.push_back(strdup(("PATH_INFO=" + request.getPathInfo()).c_str()));
 		// strdup("REMOTE_ADDR=" + request.getClientIP().c_str()), //is it needed sometimes ?
@@ -217,7 +223,8 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	std::string body;
 	bool inBody = false;
 
-	std::cout << cgiOutput << std::endl;
+	// std::cout << cgiOutput << std::endl;
+	// std::cout << "coucou" << std::endl;
 	std::istringstream stream(cgiOutput);
 	for (std::string line; std::getline(stream, line);) {
 		if (!inBody) {
@@ -234,6 +241,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 			body += line + "\n";
 		}
 	}
+	// std::cout << "coucou2" << std::endl;
 	
 	HttpResponse hRes(200, body);
 	for (std::multimap<std::string, std::string>::const_iterator it = headersMap.begin(); it != headersMap.end(); ++it) {
@@ -249,22 +257,48 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 
 const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
 	std::string filePath = request.getUri();
-	if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "php") {
-		return _cgiHandler(request, filePath);
+	if (filePath.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
+		const Location *location = findLocationByPath(_settings, "/cgi");
+		// if (location != NULL) {
+    	// 	std::cout << "Location struct:" << std::endl;
+    	// 	std::cout << "Path: " << location->path << std::endl;
+    	// 	std::cout << "Root: " << location->root << std::endl;
+    	// 	std::cout << "Index: " << location->index << std::endl;
+    	// 	std::cout << "Methods: " << location->methods << std::endl;
+    	// 	std::cout << "Error Pages: " << location->err_pages << std::endl;
+		// }
+		// std::cout << "------" << std::endl;
+		// std::cout << location->methods.find(request.getMethod()) << std::endl;
+		// std::cout << "------" << std::endl;
+		if (location == NULL) {
+			// bad config
+			// throw ?
+		}
+		else if (location->methods.find(request.getMethod()) == std::string::npos) {
+			std::cout << "405 Method Not Allowed" << std::endl;
+			throw 405;
+		}
+		return _cgiHandler(request, filePath, location);
 	}
-	else if (filePath.find_last_of(".") != std::string::npos && filePath.substr(filePath.find_last_of(".") + 1) == "py") {
-		return _cgiHandler(request, filePath);
+	const Location *location = findLocationByPath(_settings, "/");
+	if (location == NULL) {
+		// bad config
+		// throw ?
 	}
-	else if (request.getMethod() == "GET") {
+	else if (location->methods.find(request.getMethod()) == std::string::npos) {
+		std::cout << "405 Method Not Allowed" << std::endl;
+		throw 405;
+	}
+	if (request.getMethod() == "GET") {
 		return _getReqHandler(request);
 	} else if (request.getMethod() == "POST") {
 		return _postReqHandler(request);
 	} else if (request.getMethod() == "DELETE") {
 		return _deleteReqHandler(request);
-	} else {
-		return _defaultHandler(request);
 	}
+	return _defaultHandler(request);
 }
+
 
 ReqHandler::ReqHandler(const ReqHandler &src) {
 	*this = src;
