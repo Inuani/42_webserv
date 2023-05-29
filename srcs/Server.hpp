@@ -30,7 +30,7 @@
 #include "HttpReqParsing.hpp"
 
 #define PORT "8080"
-#define BACKLOG 1000
+#define BACKLOG 1024
 #define NEVENTS 4096
 
 class Serv
@@ -41,6 +41,7 @@ class Serv
 		struct addrinfo *_res;
 		std::vector<Settings> _settings;
 		std::map<int, Settings> sockfd;
+		//std::string _response;
 
 	public:
 		Serv();
@@ -52,7 +53,6 @@ class Serv
 		void		srvListen();
 		void		setEvent();
 		void		handledEvents(int kq);
-		bool		sendall(int fd, std::string msg);
 		void		recvAll(int fd);
 		bool		maxBodyTooSmall(int);
 

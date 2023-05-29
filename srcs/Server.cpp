@@ -75,30 +75,6 @@ bool isAvailable(int fd)
 	return true;
 }
 
-bool	Serv::sendall(int fd, std::string msg)
-{
-	size_t total = 0;
-	size_t len = msg.size();
-	ssize_t n;
-
-	while (total < len) {
-		if (!isAvailable(fd))
-			return false;
-		n = send(fd, msg.c_str() + total, len - total, 0);
-		if (n == -1)
-		{
-			// std::cout << strerror(errno) << n << std::endl; //...
-			continue;
-		}
-		total += n;
-	}
-	if (total != len) {
-		std::cout << "Error: sendall - Incomplete data sent" << std::endl;
-		return false;
-	}
-	return true;
-}
-
 std::string	Serv::getHost(std::string header)
 {
 	std::istringstream ssreq(header);
@@ -121,8 +97,8 @@ bool	Serv::maxBodyTooSmall(int contentLen)
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		ss << it->port;
-		// std::cout << "HOST NAME " << it->server_name + ":" + ss.str() << std::endl;
-		if (it->server_name.append(":" + ss.str()) == host
+		std::cout << "HOST NAME " << it->server_name + ":" + ss.str() << std::endl;
+		if (it->server_name + ":" + ss.str() == host
 				&& it->max_body && it->max_body < contentLen)
 		{
 			return false;
@@ -259,7 +235,7 @@ void Serv::setEvent()
 
 void Serv::handledEvents(int kq)
 {
-	//std::map<int, Settings>::iterator it;
+	std::map<int, std::string> test;
 	std::deque<int>::iterator itr;
 	struct kevent evList[NEVENTS];
 	struct kevent evSet;
@@ -281,32 +257,61 @@ void Serv::handledEvents(int kq)
 					Serv::err("kevent");
 				close(fd);
 			}
-			else if (sockfd.find(evList[i].ident) != sockfd.end()) {
+			if (sockfd.find(evList[i].ident) != sockfd.end()) {
 				fd = accept(evList[i].ident, (struct sockaddr *)&addr, &socklen);
 				if (fd == -1)
 					Serv::err("accept");
 				EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
+
+				EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+					Serv::err("kevent");
 			}
-			else if (evList[i].filter == EVFILT_READ) {
+			if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
-				recvAll(fd);
+				if (isAvailable(fd))
+					recvAll(fd);
+				std::string response;
 				try {
 					HttpReqParsing hReq(_request, _body, hostMatchingConfigs());
 					ReqHandler reqHandler(hostMatchingConfigs());
-					std::string response = reqHandler.handleRequest(hReq);
-					// std::cout << response << std::endl;
-					sendall(fd, response);
-				} catch (int errorStatus) {
-					// std::cout << errorStatus << std::endl;
-					std::string errorBody = "404";
+					response = reqHandler.handleRequest(hReq);
+				} catch (const std::runtime_error& e) {
+					std::cout << e.what() << std::endl;
+
+					int errorStatus;
+					std::istringstream errS(e.what());
+					if (!(errS >> errorStatus)) {
+						errorStatus = 404;
+					}
+					std::string errorBody = e.what();
 					HttpResponse errRes(errorStatus, errorBody);
-					std::string response = errRes.toString();
-					sendall(fd, response);
+					response = errRes.toString();
 				}
-				if (isAvailable(fd))
+				test[fd] = response;
+				//std::cout << response << std::endl;
+			}
+			if (evList[i].filter == EVFILT_WRITE)
+			{
+				fd = evList[i].ident;
+				if (test.find(fd) == test.end() || test[fd].empty())
+					continue;
+				if (test[fd].length() >= 1000) 
+				{
+					int n = send(fd, test[fd].c_str(), 1000, 0);
+					test[fd].erase(0, n);
+				}
+				else
+				{
+					int n = send(fd, test[fd].c_str(), test[fd].length(), 0);
+					test[fd].erase(0, n);
+					if (test[fd].empty())
+						test.erase(fd);
 					close(fd);
+				}
+				//std::cout << test[fd].length() << std::endl;
 			}
 		}
 	}
