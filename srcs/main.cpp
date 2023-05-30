@@ -12,10 +12,10 @@ int main(int argc, char *argv[])
 	Serv s;
 	for(std::vector<Settings>::iterator it = setts.begin(); it != setts.end(); it++)
 	{
-		setts_debug(*it);
+		//setts_debug(*it); DEBUG
 		std::vector<Location> locs = it->location;
 		for(std::vector<Location>::iterator it2 = locs.begin(); it2 != locs.end(); it2++)
-			locs_debug(*it2);
+			//locs_debug(*it2); DEBUG
 	}
 
 	if (setts.empty())
