@@ -73,12 +73,13 @@ const Location* findLocationByPath(const Settings& set, const std::string& path)
 	return NULL;
 }
 
-const std::string	repertoryListing(const std::string directoryPath)
+const std::string	repertoryListing(const std::string directoryPath, const Location* location)
 {
 	std::stringstream	htmlFile;
 	DIR* 				dir;
 	struct dirent*		entry;
 
+	std::cout << "dirPath is : " << directoryPath << std::endl;
 	if ((dir = opendir(directoryPath.c_str())) != NULL)
 	{
 		htmlFile << "<!DOCTYPE html>";
@@ -101,6 +102,8 @@ const std::string	repertoryListing(const std::string directoryPath)
 				continue;
 			}
 			std::string link = name;
+			if (location)
+				link = location->path + "/" + name;
 			if (entry->d_type == DT_DIR) {
 				link += "/";
 			}

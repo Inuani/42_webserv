@@ -21,12 +21,15 @@ private:
 	ReqHandler(const ReqHandler& src);
 	ReqHandler& operator=(const ReqHandler& rhs);
 
-	const std::string	_cgiHandler(const HttpReqParsing& request, const std::string& filePath, const Location *location);
+	const std::string	_cgiHandler(const HttpReqParsing& request);
 	const std::string	_getReqHandler(const HttpReqParsing& request);
 	const std::string	_postReqHandler(const HttpReqParsing& request);
 	const std::string	_deleteReqHandler(const HttpReqParsing& request);
 	const std::string	_defaultHandler(const HttpReqParsing& request);
 	Settings			_settings;
+	const Location*		_reqLocation;
+	std::string			_filePath;
+	std::string			_fileName;
 
 
 	// GetRequestHandler	getReqHandler;

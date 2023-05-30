@@ -43,7 +43,7 @@ std::string ErrorHandler::getErrorFile() const
 void ErrorHandler::generateBody()
 {
 	std::string path = getErrorFile();
-	path = "/404.html";
+	//path = "/404.html";
 	if (!path.empty())
 	{
 		findFileLocation(path);
