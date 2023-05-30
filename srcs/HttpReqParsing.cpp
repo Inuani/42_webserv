@@ -20,8 +20,20 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 
 void	HttpReqParsing::_splitUriWithLocations() {
 	for (std::vector<Location>::const_iterator it = _settings.location.begin(); it != _settings.location.end(); ++it)
-		if (_uri.find(it->path) == 0 && _uri.compare(0, it->path.length(), it->path) && it->path.length() > _locationPath.length())
+	{
+		if (_uri.find(it->path) == 0 && !(_uri.compare(0, it->path.length(), it->path)) && it->path.length() > _locationPath.length())
 			_locationPath = it->path;
+	}
+	if (_uri.find(_locationPath) == 0)
+	{
+		_uri = _uri.substr(_locationPath.length());
+		_reqLocation = findLocationByPath(_settings, _locationPath);
+		_filename = _uri;
+		_filedir = _reqLocation->root;
+		if (_filename.find("/") != 0)
+			_filename = "/" + _filename;
+		std::cout << "Full path : " << _filedir << " + " << _filename << std::endl;
+	}
 }
 
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
@@ -191,6 +203,20 @@ const std::string&	HttpReqParsing::getfileExt() const {
 	return _fileExt;
 }
 
+std::string	HttpReqParsing::getFileName() const
+{
+	return(_filename);
+}
+
+std::string	HttpReqParsing::getFileDir() const
+{
+	return (_filedir);
+}
+const Location*	HttpReqParsing::getFileLocation() const
+{
+	return (_reqLocation);
+}
+
 HttpReqParsing::HttpReqParsing() {}
 
 HttpReqParsing::HttpReqParsing(const HttpReqParsing &src) {
@@ -201,4 +227,3 @@ HttpReqParsing&	HttpReqParsing::operator=(const HttpReqParsing& rhs) {
 	(void)rhs;
 	return *this;
 }
-

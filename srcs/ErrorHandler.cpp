@@ -43,7 +43,7 @@ std::string ErrorHandler::getErrorFile() const
 void ErrorHandler::generateBody()
 {
 	std::string path = getErrorFile();
-	path = "/cgi-bin/debug/tester.php";
+	//path = "/404.html";
 	if (!path.empty())
 	{
 		findFileLocation(path);

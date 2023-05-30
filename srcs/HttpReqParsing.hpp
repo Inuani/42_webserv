@@ -25,7 +25,9 @@ public:
 	const std::string&							getQueryString() const;
 	const std::string							getHeadersValue(const std::string& key) const;
 	const std::string							getQueryValue(const std::string& key) const;
-
+	std::string									getFileDir() const;
+	const Location*								getFileLocation() const;
+	std::string									getFileName() const;
 private:
 
 	HttpReqParsing();
@@ -48,6 +50,9 @@ private:
 	std::map<std::string, std::string>	_queryMap;
 	Settings							_settings;
 	std::string							_locationPath;
+	std::string							_filename;
+	std::string							_filedir;
+	const Location*						_reqLocation;
 
 
 };
