@@ -82,7 +82,7 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 		// std::cout << boundary << std::endl;
 		// std::cout << request.getBody() << std::endl;
 		std::string content = request.getBody().substr(request.getBody().find("\r\n\r\n") + 4, std::string::npos);
-		content.erase(content.find(boundary), std::string::npos);
+		content.erase(content.find(boundary) - 4, std::string::npos);
 
 		std::string filename = request.getBody().substr(request.getBody().find("filename=") + 10, std::string::npos);
 		filename.erase(filename.find("\""), std::string::npos);
