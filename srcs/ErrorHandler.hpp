@@ -22,18 +22,18 @@
 class ErrorHandler
 {
 private:
-    int _intStatusCode;
-    std::string _strStatusCode;
-    std::map<std::string, std::string> _errorFileMap;
-    std::string _body;
-    Settings _settings;
-    
-    void readFile(const std::string& path);
-    std::string getErrorFile() const;
-public:
-    ErrorHandler(const int statusCode, const std::map<std::string, std::string> errorFiles, const Settings& settings);
-    ~ErrorHandler();
+	int _intStatusCode;
+	std::string _strStatusCode;
+	std::map<std::string, std::string> _errorFileMap;
+	std::string _body;
+	Settings _settings;
 
-    std::string getBody() const;
-    void generateBody();
+	void readFile(const std::string& path);
+	std::string getErrorFile() const;
+public:
+	ErrorHandler(const int statusCode, const std::map<std::string, std::string> errorFiles, const Settings& settings);
+	~ErrorHandler();
+
+	std::string getBody() const;
+	void generateBody();
 };

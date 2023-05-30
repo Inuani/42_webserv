@@ -18,6 +18,8 @@ void setts_debug(struct Settings settings)
 	std::cout << settings.server_name << std::endl;
 	std::cout << settings.root << std::endl;
 	std::cout << settings.index << std::endl;
+	for (std::map<std::string, std::string>::iterator it = settings.redirect.begin() ; it != settings.redirect.end(); ++it)
+		std::cout << it-> first << " : " << it->second << std::endl;
 	//std::cout << settings. << std::endl;
 }
 
@@ -30,6 +32,7 @@ void locs_debug(struct Location location)
 	std::cout << location.error << std::endl;
 	std::cout << location.ext << std::endl;
 	std::cout << location.dir_listing << std::endl;
+	
 }
 
 //max_body must be 0
@@ -162,6 +165,18 @@ Settings create_settings(std::stringstream &file)
 				//create_location(file, line);
 				settings.location.push_back(create_location(file, line));
 			}
+			else if (line == "redirect")
+			{
+				while(std::getline(file, line))
+				{
+					if (line.find('}') != std::string::npos)
+						break;
+					std::istringstream redirectStream(line);
+					std::string key, value;
+					redirectStream >> key >> value;
+					settings.redirect[key] = value;
+				}
+			}
 			else if(line == "}")
 				return settings;
 			line = "";
@@ -169,7 +184,6 @@ Settings create_settings(std::stringstream &file)
 	}
 	return settings;
 }
-
 
 void getConfig(std::vector<Settings> &setts)
 {
@@ -186,3 +200,90 @@ void getConfig(std::vector<Settings> &setts)
 			setts.push_back(create_settings(file));
 	}
 }
+
+
+// void handleRoot(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	stream >> settings.root;
+// }
+
+// void handleIndex(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	 stream >> settings.index;
+// }
+
+// void handleError(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	std::string word;
+// 	while(stream >> word)
+// 		settings.error += word;
+// }
+
+// void handleDirListing(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	stream >> settings.dir_listing;
+// }
+
+// void handleListen(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	size_t number;
+// 	stream >> number;
+// 	if ((number <= 65535) && (number >= 0))
+// 		settings.port = number;
+// 	else {
+// 		std::cerr << "Invalid port number" << std::endl;
+// 		exit(1);
+// 	}
+// }
+
+// void handleMaxBody(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	size_t number;
+// 	stream >> number;
+// 	if (number > (size_t)1000000000000000000) {
+// 		std::cerr << "MAX_BODY TOO BIG" << std::endl;
+// 		exit(1);
+// 	}
+// 	settings.max_body = number;
+// }
+
+// void handleServerName(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	std::string word;
+// 	while(stream >> word)
+// 		settings.server_name += word;
+// }
+
+// void handleLocation(std::istringstream& stream, Settings& settings, std::stringstream& file) {
+// 	std::string line;
+// 	stream >> line;
+// 	settings.location.push_back(create_location(file, line));
+// }
+
+// typedef void (*settingFunc)(std::istringstream&, Settings&, std::stringstream&);
+// std::map<std::string, settingFunc> handlers;
+
+// void initHandlersMap() {
+// 	handlers["root"] = handleRoot;
+// 	handlers["index"] = handleIndex;
+// 	handlers["error"] = handleError;
+// 	handlers["dir_listing"] = handleDirListing;
+// 	handlers["listen"] = handleListen;
+// 	handlers["max_body"] = handleMaxBody;
+// 	handlers["server_name"] = handleServerName;
+// 	handlers["location"] = handleLocation;
+// }
+
+// Settings create_settings(std::stringstream &file) {
+// 	Settings settings;
+// 	size_t number;
+// 	std::string line;
+// 	std::string word;
+
+// 	default_sett(settings);
+// 	while (std::getline(file, line))
+// 	{
+// 		std::istringstream ssline(line);
+// 		while (ssline >> word)
+// 		{
+// 			if (handlers.count(word))
+// 				handlers[word](ssline, settings, file);
+// 			else if (word == "}")
+// 				return settings;
+// 		}
+// 	}
+// 	return settings;
+// }

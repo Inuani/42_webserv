@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>500 Internal Server Error</title>
+	<style>
+		* {
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+		}
+		body {
+			padding: 0;
+			margin: 0;
+			font-family: Arial, sans-serif;
+			background: linear-gradient(to right, #6441a5, #2a0845);
+			color: #fff;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			height: 100vh;
+			text-align: center;
+		}
+		h1 {
+			font-size: 60px;
+			margin: 0;
+			color: orange;
+		}
+		p {
+			margin: 0;
+			font-size: 1.6em;
+		}
+		.content {
+			max-width: 600px;
+			z-index: 2;
+		}
+		.content:before {
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 100%;
+			width: 100%;
+			z-index: 1;
+			background: rgba(0, 0, 0, 0.2);
+		}
+	</style>
+</head>
+<body>
+	<div class="content">
+		<h1>500</h1>
+		<p>Internal Server Error</p>
+		<p>Oops! Something went wrong. The server encountered an internal error and was unable to complete your request. Please try again later.</p>
+	</div>
+</body>
+</html>

@@ -18,7 +18,7 @@ SRC_FILES	=	main.cpp \
 				ReqHandler.cpp \
 				utils.cpp \
 				Server.cpp \
-				confParser.cpp
+				confparser.cpp
 
 
 OBJ_DIR		= ./objs/

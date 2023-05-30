@@ -3,6 +3,7 @@
 #include "utils.hpp"
 #include <iostream>
 #include "ContentTypes.hpp"
+#include "dirent.h"
 
 std::string readFileContent(const std::string& path) {
 	std::ifstream file(path, std::ios::binary);
@@ -72,3 +73,42 @@ const Location* findLocationByPath(const Settings& set, const std::string& path)
 	return NULL;
 }
 
+const std::string	repertoryListing(const std::string directoryPath)
+{
+	std::stringstream	htmlFile;
+	DIR* 				dir;
+	struct dirent*		entry;
+
+	if ((dir = opendir(directoryPath.c_str())) != NULL)
+	{
+		htmlFile << "<!DOCTYPE html>";
+		htmlFile << "<html><head><title>Directory Listing</title>";
+		htmlFile << "<style>";
+		htmlFile << "body {font-family: Arial, sans-serif; padding: 20px;}";
+		htmlFile << "h1 {color: #5a5a5a;}";
+		htmlFile << ".file-link {display: block; margin: 5px 0;}";
+		htmlFile << ".directory {color: #1a73e8;}";
+		htmlFile << "</style>";
+		htmlFile << "</head><body>";
+		htmlFile << "<h1>Directory Listing</h1>";
+
+		// Iterate over the files and directories
+		while ((entry = readdir(dir)) != NULL)
+		{
+			std::string name = entry->d_name;
+			// Ignore hidden files and special directories (. and ..)
+			if (name[0] == '.') {
+				continue;
+			}
+			std::string link = name;
+			if (entry->d_type == DT_DIR) {
+				link += "/";
+			}
+			htmlFile << "<a href=\"" << link << "\">" << name << "</a><br>";
+		}
+		htmlFile << "</body></html>";
+		closedir(dir);
+		std::cout << "Directory listing generated successfully." << std::endl;
+	}
+	return (htmlFile.str());
+}

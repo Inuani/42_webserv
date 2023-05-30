@@ -15,16 +15,31 @@ ReqHandler::ReqHandler(const Settings& settings) : _settings(settings) {}
 
 const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	std::string filePath = _settings.root;
-	// std::cout << _settings.index << std::endl;
 	std::string defaultFile = _settings.index;
-	// std::cout << defaultFile << std::endl;
-	if (request.getQueryString().find("file") != std::string::npos) {
-		filePath.append("/" + request.getQueryValue("file"));
-	} else if (request.getUri() == "/")
-		filePath.append(defaultFile);
-	else {
-		filePath.append(request.getUri());
+	
+	if (_settings.dir_listing == "on")
+	{
+		const std::string dirContent = repertoryListing(filePath + request.getUri());
+		if (!dirContent.empty())
+		{
+			HttpResponse hRes(200, dirContent);
+			std::string response = hRes.toString();
+			return response;
+		}
 	}
+	std::string redirectYes = _settings.redirect[request.getUri()];
+	if (!redirectYes.empty())
+	{
+		HttpResponse hRes(302, "");
+		hRes.setHeaders("Location", redirectYes);
+		return hRes.toString();
+	}
+	else if (request.getQueryString().find("file") != std::string::npos)
+		filePath.append("/" + request.getQueryValue("file"));
+	else if (request.getUri() == "/")
+		filePath.append(defaultFile);
+	else
+		filePath.append(request.getUri());
 	std::string body = readFileContent(filePath);
 	HttpResponse hRes(getResponseCode(filePath), body);
 	hRes.setHeaders("Content-Type", getFileType(filePath));
@@ -64,8 +79,8 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 
 		// std::string boundary = request.getBody().substr(0, 40); //caution
 		std::string boundary = contentType.substr(contentType.find("boundary=") + 9, contentType.size() - 10 - contentType.find("boundary="));
-		std::cout << boundary << std::endl;
-		std::cout << request.getBody() << std::endl;
+		// std::cout << boundary << std::endl;
+		// std::cout << request.getBody() << std::endl;
 		std::string content = request.getBody().substr(request.getBody().find("\r\n\r\n") + 4, std::string::npos);
 		content.erase(content.find(boundary), std::string::npos);
 
@@ -81,9 +96,11 @@ const std::string	ReqHandler::_postReqHandler(const HttpReqParsing& request) {
 		hRes.setHeaders("Location", "/uploadSuccess.html");
 		return hRes.toString();
 	}
-	HttpResponse hRes(404, "Error");
-	hRes.setHeaders("Content-Type", "text/plain");
-	return hRes.toString();
+	throw 404;
+	return "";
+	// HttpResponse hRes(404, "Error");
+	// hRes.setHeaders("Content-Type", "text/plain");
+	// return hRes.toString();
 }
 
 const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
@@ -105,11 +122,11 @@ const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
 		hRes.setHeaders("Location", "/success.html");
 		return hRes.toString();
 	}
-	// throw 404;
-	// return "";
-	HttpResponse hRes(404, "Error");
-	hRes.setHeaders("Content-Type", "text/plain");
-	return hRes.toString();
+	throw 404;
+	return "";
+	// HttpResponse hRes(404, "Error");
+	// hRes.setHeaders("Content-Type", "text/plain");
+	// return hRes.toString();
 }
 
 const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
@@ -122,8 +139,7 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const std::string& filePath, const Location *location) {
 	int fd[2];
 	if (pipe(fd) < 0) {
-		perror("Pipe error");
-		return "";
+		throw 500;
 	}
 	char *args[] = {NULL, NULL, NULL};
 	if (filePath.substr(filePath.find_last_of(".") + 1) == "py") {
@@ -166,7 +182,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	pid_t	pid = fork();
 	if (pid == 0) {
 
-		alarm(10);
+		alarm(5);
 		signal(SIGALRM, exit);
 		
 		int bodyFd[2];
@@ -200,46 +216,61 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 		}
 	}
 	else if (pid < 0) {
-		std::cerr << "fork Error" << std::endl;
-		return "";
+		throw 500;
 	}
 
 	int status;
 	waitpid(pid, &status, 0);
+	if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+		throw 500;
+	}
 
 	close(fd[1]);
 	std::vector<char> buffer(1024);
 	std::string cgiOutput;
-
-	while (true) {
-		ssize_t n = read(fd[0], &buffer[0], buffer.size());
-		if (n <= 0) {
-			break;
-		}
-		cgiOutput.append(buffer.begin(), buffer.begin() + n);
-	}
-	close(fd[0]);
 	std::multimap<std::string, std::string> headersMap;
 	std::string body;
-	bool inBody = false;
 
-	// std::cout << cgiOutput << std::endl;
-	// std::cout << "coucou" << std::endl;
-	std::istringstream stream(cgiOutput);
-	for (std::string line; std::getline(stream, line);) {
-		if (!inBody) {
-			size_t delim = line.find(":");
-			if (delim == std::string::npos) {
-				inBody = true;
-				body += line + "\n";
-			} else {
-				std::string key = line.substr(0, delim);
-				std::string value = line.substr(delim + 2);
-				headersMap.insert(std::make_pair(key, value));
+	try
+	{
+		while (true)
+		{
+			ssize_t n = read(fd[0], &buffer[0], buffer.size());
+			if (n <= 0) {
+				break;
 			}
-		} else {
-			body += line + "\n";
+			cgiOutput.append(buffer.begin(), buffer.begin() + n);
 		}
+		close(fd[0]);
+		bool inBody = false;
+
+		// std::cout << cgiOutput << std::endl;
+		std::istringstream stream(cgiOutput);
+		for (std::string line; std::getline(stream, line);) {
+			if (!inBody)
+			{
+				size_t delim = line.find(":");
+				if (delim == std::string::npos)
+				{
+					inBody = true;
+					body += line + "\n";
+				}
+				else
+				{
+					std::string key = line.substr(0, delim);
+					std::string value = line.substr(delim + 2);
+					headersMap.insert(std::make_pair(key, value));
+				}
+			}
+			else
+			{
+				body += line + "\n";
+			}
+		}
+	}
+	catch (const std::exception& err)
+	{
+		throw 500;
 	}
 	// std::cout << "coucou2" << std::endl;
 	
@@ -249,9 +280,9 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request, const s
 	}
 
 	std::string response = hRes.toString();
-	std::cout << "<--------------- cgi response --------------->" << std::endl;
-	std::cout << response << std::endl;
-	std::cout << "<--------------- end cgi response --------------->" << std::endl;
+	// std::cout << "<--------------- cgi response --------------->" << std::endl;
+	// std::cout << response << std::endl;
+	// std::cout << "<--------------- end cgi response --------------->" << std::endl;
 	return response;
 }
 
@@ -259,17 +290,6 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
 	std::string filePath = request.getUri();
 	if (filePath.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
 		const Location *location = findLocationByPath(_settings, "/cgi");
-		// if (location != NULL) {
-    	// 	std::cout << "Location struct:" << std::endl;
-    	// 	std::cout << "Path: " << location->path << std::endl;
-    	// 	std::cout << "Root: " << location->root << std::endl;
-    	// 	std::cout << "Index: " << location->index << std::endl;
-    	// 	std::cout << "Methods: " << location->methods << std::endl;
-    	// 	std::cout << "Error Pages: " << location->err_pages << std::endl;
-		// }
-		// std::cout << "------" << std::endl;
-		// std::cout << location->methods.find(request.getMethod()) << std::endl;
-		// std::cout << "------" << std::endl;
 		if (location == NULL) {
 			// bad config
 			// throw ?
@@ -296,7 +316,9 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request) {
 	} else if (request.getMethod() == "DELETE") {
 		return _deleteReqHandler(request);
 	}
-	return _defaultHandler(request);
+	throw 501; // Not Implemented
+	return "";
+	// return _defaultHandler(request);
 }
 
 
@@ -310,3 +332,16 @@ ReqHandler&	ReqHandler::operator=(const ReqHandler& rhs) {
 	(void)rhs;
 	return *this;
 }
+
+
+		// if (location != NULL) {
+		// 	std::cout << "Location struct:" << std::endl;
+		// 	std::cout << "Path: " << location->path << std::endl;
+		// 	std::cout << "Root: " << location->root << std::endl;
+		// 	std::cout << "Index: " << location->index << std::endl;
+		// 	std::cout << "Methods: " << location->methods << std::endl;
+		// 	std::cout << "Error Pages: " << location->err_pages << std::endl;
+		// }
+		// std::cout << "------" << std::endl;
+		// std::cout << location->methods.find(request.getMethod()) << std::endl;
+		// std::cout << "------" << std::endl;

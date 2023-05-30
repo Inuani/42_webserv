@@ -11,10 +11,10 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 	: _body(strBody), _settings(settings)
 {
 	_parseHeader(strHeader);
-	std::cout << std::endl;
-	std::cout << "<--------------- start body --------------->" << std::endl;
-	std::cout << _body << std::endl;
-	std::cout << "<--------------- end request --------------->" << std::endl;
+	// std::cout << std::endl;
+	// std::cout << "<--------------- start body --------------->" << std::endl;
+	// std::cout << _body << std::endl;
+	// std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
@@ -30,6 +30,8 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	std::istringstream requestStream(line);
 
 	requestStream >> _method >> _uri >> _version;
+	if (_uri.length() > 8192)
+		throw 414;
 
 	// std::cout << "<--------------- new start --------------->" << std::endl;
 	size_t pos = _uri.find('?');

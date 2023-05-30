@@ -51,7 +51,7 @@ input[type="submit"]:hover {
 
 <?php
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $target_dir = "../../data/";
+    $target_dir = "../../../data/";
     $target_file = $target_dir . basename($_FILES["filename"]["name"]);
 
     if (move_uploaded_file($_FILES["filename"]["tmp_name"], $target_file)) {

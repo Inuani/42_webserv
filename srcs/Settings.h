@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 struct Location
 {
@@ -11,7 +12,9 @@ struct Location
 	std::string root;
 	std::string index;
 	std::string methods;
-	std::string err_pages;
+	std::string error;
+	std::string dir_listing;
+	std::string ext;
 };
 
 struct Settings
@@ -20,9 +23,11 @@ struct Settings
 	std::size_t	max_body;
 	std::string	root;
 	std::string	index;
-	std::string	err_pages;
+	std::string	error;
 	std::string	server_name;
+	std::string dir_listing;
 	std::vector<Location> location;
+	std::map<std::string, std::string> redirect;
 };
 
 void locs_debug(Location location);
