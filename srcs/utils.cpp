@@ -51,7 +51,7 @@ int getResponseCode(const std::string& filePath)
 	std::ifstream file(filePath, std::ios::binary);
 	if (!file.is_open())
 	{
-		return 404;
+		throw 404;
 	}
 	return 200;
 }

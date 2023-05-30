@@ -5,6 +5,7 @@
 #include "HttpResponse.hpp"
 #include "ReqHandler.hpp"
 #include "utils.hpp"
+#include "ErrorHandler.hpp"
 
 std::vector<std::string> Serv::miniSplit(std::string toSplit)
 {
@@ -283,19 +284,18 @@ void Serv::handledEvents(int kq)
 					// std::cout << test2[fd].body << std::endl;
 					std::string response;
 					//std::cout << _body << std::endl;
-					try {
+					try 
+					{
 						HttpReqParsing hReq(test2[fd].request, test2[fd].body, hostMatchingConfigs(test2[fd].request));
 						ReqHandler reqHandler(hostMatchingConfigs(test2[fd].request));
 						response = reqHandler.handleRequest(hReq);
-					} catch (const std::exception &e) {
-						//std::cout << e.what() << std::endl;
-						int errorStatus;
-						std::istringstream errS(e.what());
-						if (!(errS >> errorStatus)) {
-							errorStatus = 404;
-						}
-						std::string errorBody = e.what();
-						HttpResponse errRes(errorStatus, errorBody);
+					} 
+					catch (int errorCode)
+					{
+						std::map<std::string, std::string> test;
+						ErrorHandler errHandler(errorCode, test, hostMatchingConfigs(test2[fd].request));
+						errHandler.generateBody();
+						HttpResponse errRes(errorCode, errHandler.getBody());
 						response = errRes.toString();
 					}
 					test[fd] = response;
