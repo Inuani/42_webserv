@@ -56,7 +56,7 @@ Serv::Serv() {}
 Serv::~Serv() {}
 // void	serv::setSocket()
 
-const void	Serv::settings_setter(std::vector<Settings> settings)
+void	Serv::settings_setter(std::vector<Settings> settings)
 {
 	_settings = settings;
 }
@@ -106,7 +106,7 @@ bool	Serv::maxBodyTooSmall(int contentLen, std::string request)
 		for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 		{
 			if ((hostMatching(host, miniSplit(it->server_name), it->port))
-					&& it->max_body && it->max_body < contentLen)
+					&& it->max_body && it->max_body < (unsigned long)contentLen) // DEBUG COMPARISON
 			{
 				return false;
 			}
@@ -152,7 +152,7 @@ void	Serv::setBindAddrinfo()
 	int fd;
 	int bol = 1;
 	struct addrinfo *p;
-	int i = 0;
+	//int i = 0; // USELESS VAR ???
 	int status;
 	struct addrinfo hints;
 	

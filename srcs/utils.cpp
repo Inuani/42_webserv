@@ -4,6 +4,7 @@
 #include <iostream>
 #include "ContentTypes.hpp"
 #include "dirent.h"
+#include <stdio.h>
 
 std::string readFileContent(const std::string& path) {
 	std::ifstream file(path, std::ios::binary);
@@ -56,7 +57,7 @@ int getResponseCode(const std::string& filePath)
 	return 200;
 }
 
-int getContentLen(const std::string& header)
+size_t getContentLen(const std::string& header)
 {
 	std::string len;
 	len = header.substr(header.find("Content-Length:") + 16, (header.find("\n", header.find("Content-Length:"))));

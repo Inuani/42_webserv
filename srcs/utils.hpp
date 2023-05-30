@@ -3,6 +3,7 @@
 
 #include <string>
 #include "Settings.h"
+#include <stdio.h>
 
 std::string		readFileContent(const std::string& path);
 std::string		getFileType(const std::string& filePath);

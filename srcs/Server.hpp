@@ -66,7 +66,7 @@ class Serv
 		bool hostMatching(std::string host, std::vector<std::string> hosts_conf, int port);
 		Settings &hostMatchingConfigs(std::string);
 		std::string	getHost(std::string);
-		const void	settings_setter(std::vector<Settings> settings);
+		void	settings_setter(std::vector<Settings> settings);
 };
 
 #endif
