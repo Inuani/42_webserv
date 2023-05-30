@@ -130,6 +130,7 @@ const std::string	ReqHandler::_deleteReqHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
+	(void) request; // DEBUG
 	HttpResponse hRes(404, "Error");
 	hRes.setHeaders("Content-Type", "text/plain");
 	std::string response = hRes.toString();
@@ -332,16 +333,3 @@ ReqHandler&	ReqHandler::operator=(const ReqHandler& rhs) {
 	(void)rhs;
 	return *this;
 }
-
-
-		// if (location != NULL) {
-		// 	std::cout << "Location struct:" << std::endl;
-		// 	std::cout << "Path: " << location->path << std::endl;
-		// 	std::cout << "Root: " << location->root << std::endl;
-		// 	std::cout << "Index: " << location->index << std::endl;
-		// 	std::cout << "Methods: " << location->methods << std::endl;
-		// 	std::cout << "Error Pages: " << location->err_pages << std::endl;
-		// }
-		// std::cout << "------" << std::endl;
-		// std::cout << location->methods.find(request.getMethod()) << std::endl;
-		// std::cout << "------" << std::endl;

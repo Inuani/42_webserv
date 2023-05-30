@@ -4,6 +4,8 @@
 
 int main(int argc, char *argv[])
 {
+	(void) argc; // DEBUG
+	(void) argv; // DEBUG
 	std::vector<Settings> setts;
 	getConfig(setts);
 

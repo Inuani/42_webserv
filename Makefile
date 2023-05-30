@@ -30,7 +30,7 @@ OBJ			= ${addprefix ${OBJ_DIR}, ${OBJ_FILES}}
 
 # FLAGS
 CC			= c++
-CFLAGS		= #-Wall -Wextra -Werror
+CFLAGS		= -Wall -Wextra -Werror
 CPP_FLAGS	= -std=c++98 -pedantic
 
 # COMMANDS
