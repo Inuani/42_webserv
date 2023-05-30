@@ -12,7 +12,6 @@ struct Location
 	std::string root;
 	std::string index;
 	std::string methods;
-	std::string error;
 	std::string dir_listing;
 	std::string ext;
 };
@@ -28,6 +27,7 @@ struct Settings
 	std::string dir_listing;
 	std::vector<Location> location;
 	std::map<std::string, std::string> redirect;
+	std::map<std::string, std::string> error_pages;
 };
 
 void locs_debug(Location location);

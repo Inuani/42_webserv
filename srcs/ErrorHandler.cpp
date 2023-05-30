@@ -43,7 +43,7 @@ std::string ErrorHandler::getErrorFile() const
 void ErrorHandler::generateBody()
 {
 	std::string path = getErrorFile();
-	path = "/404.html";
+	path = "/cgi-bin/debug/tester.php";
 	if (!path.empty())
 	{
 		findFileLocation(path);
@@ -74,8 +74,8 @@ void ErrorHandler::findFileLocation(const std::string& filePath)
 		location = findLocationByPath(_settings, "/");
 	if (location == NULL)
 	{
-		// if settings.index is not default value
-		_filedir = _settings.root;
+		if (!_settings.root.empty())
+			_filedir = _settings.root;
 	}
 	else
 		_filedir = location->root;
