@@ -12,26 +12,26 @@
 
 void setts_debug(struct Settings settings)
 {
-	std::cout << settings.port << std::endl;
-	std::cout << settings.max_body << std::endl;
-	std::cout << settings.error << std::endl;
-	std::cout << settings.server_name << std::endl;
-	std::cout << settings.root << std::endl;
-	std::cout << settings.index << std::endl;
-	for (std::map<std::string, std::string>::iterator it = settings.redirect.begin() ; it != settings.redirect.end(); ++it)
-		std::cout << it-> first << " : " << it->second << std::endl;
+	// std::cout << settings.port << std::endl;
+	// std::cout << settings.max_body << std::endl;
+	// std::cout << settings.error << std::endl;
+	// std::cout << settings.server_name << std::endl;
+	// std::cout << settings.root << std::endl;
+	// std::cout << settings.index << std::endl;
+	// for (std::map<std::string, std::string>::iterator it = settings.redirect.begin() ; it != settings.redirect.end(); ++it)
+	// 	std::cout << it-> first << " : " << it->second << std::endl;
 	//std::cout << settings. << std::endl;
 }
 
 void locs_debug(struct Location location)
 {
-	std::cout << location.path << std::endl;
-	std::cout << location.root << std::endl;
-	std::cout << location.index << std::endl;
-	std::cout << location.methods << std::endl;
-	std::cout << location.error << std::endl;
-	std::cout << location.ext << std::endl;
-	std::cout << location.dir_listing << std::endl;
+	// std::cout << location.path << std::endl;
+	// std::cout << location.root << std::endl;
+	// std::cout << location.index << std::endl;
+	// std::cout << location.methods << std::endl;
+	// std::cout << location.error << std::endl;
+	// std::cout << location.ext << std::endl;
+	// std::cout << location.dir_listing << std::endl;
 	
 }
 

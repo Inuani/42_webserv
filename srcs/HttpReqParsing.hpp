@@ -32,6 +32,7 @@ private:
 	HttpReqParsing(const HttpReqParsing& src);
 	HttpReqParsing& operator=(const HttpReqParsing& rhs);
 
+	void		_splitUriWithLocations();
 	void		_parseHeader(const std::string& strHeader);
 	void		_queryStr2Map(const std::string& queryString);
 	std::string	_decodeUrl(const std::string& qS);
@@ -46,6 +47,8 @@ private:
 	std::string							_fileExt;
 	std::map<std::string, std::string>	_queryMap;
 	Settings							_settings;
+	std::string							_locationPath;
+
 
 };
 

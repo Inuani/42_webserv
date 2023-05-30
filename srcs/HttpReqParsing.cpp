@@ -17,6 +17,13 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 	// std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
+
+void	HttpReqParsing::_splitUriWithLocations() {
+	for (std::vector<Location>::const_iterator it = _settings.location.begin(); it != _settings.location.end(); ++it)
+		if (_uri.find(it->path) == 0 && _uri.compare(0, it->path.length(), it->path) && it->path.length() > _locationPath.length())
+			_locationPath = it->path;
+}
+
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
 {
 
@@ -56,7 +63,14 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 		pos = _uri.find(_pathInfo);
 		_uri = _uri.substr(0, pos);
 	}
-	// std::cout << _uri << std::endl;
+
+
+
+	std::cout << "initial uri : "<< _uri << std::endl;
+	_splitUriWithLocations();
+	std::cout << "transformed uri : "<< _uri << std::endl;
+	std::cout << "location path : "<< _locationPath << std::endl;
+
 	// std::cout << "<--------------- new end --------------->" << std::endl;
 
 	
@@ -80,7 +94,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
         //     throw ...
         // }
 		std::getline(headerStream, key, ':');
-		key.erase(key.find_last_not_of(" \n\r\t")+1);
+		key.erase(key.find_last_not_of(" \n\r\t") + 1);
 		std::getline(headerStream, value);
 		size_t start = value.find_first_not_of(" \n\r\t");
         if (start != std::string::npos) {
