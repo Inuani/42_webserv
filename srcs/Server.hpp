@@ -54,14 +54,16 @@ class Serv
 		~Serv();
 		Serv(Settings settings);
 
+		std::string chunkedBody(std::string req);
 		void		err(std::string msg);
 		void		setBindAddrinfo();
 		void		srvListen();
 		void		setEvent();
 		void		handledEvents(int kq);
 		bool		recvAll(int fd, std::string &, std::string &);
-		bool		maxBodyTooSmall(int, std::string);
+		bool		maxBodyTooSmall(unsigned long, std::string);
 
+		std::string sendError(int, std::string);
 		std::vector<std::string> miniSplit(std::string toSplit);
 		bool hostMatching(std::string host, std::vector<std::string> hosts_conf, int port);
 		Settings &hostMatchingConfigs(std::string);

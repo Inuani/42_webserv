@@ -91,7 +91,7 @@ std::string	Serv::getHost(std::string header)
 	return "";
 }
 
-bool	Serv::maxBodyTooSmall(int contentLen, std::string request)
+bool	Serv::maxBodyTooSmall(unsigned long contentLen, std::string request)
 {
 	std::stringstream ss;
 	std::string host = getHost(request);
@@ -106,7 +106,7 @@ bool	Serv::maxBodyTooSmall(int contentLen, std::string request)
 		for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 		{
 			if ((hostMatching(host, miniSplit(it->server_name), it->port))
-					&& it->max_body && it->max_body < (unsigned long)contentLen) // DEBUG COMPARISON
+					&& it->max_body && it->max_body < contentLen) // DEBUG COMPARISON
 			{
 				return false;
 			}
@@ -115,31 +115,67 @@ bool	Serv::maxBodyTooSmall(int contentLen, std::string request)
 	return true;
 }
 
+std::string Serv::chunkedBody(std::string req)
+{
+	std::string body;
+	size_t chunkStartIndex = 0;
+	while (true)
+	{
+		size_t chunkSizeEndIndex = req.find("\r\n", chunkStartIndex);
+		if (chunkSizeEndIndex == std::string::npos)
+			throw 400;
+
+		std::string chunkSizeStr = req.substr(chunkStartIndex, chunkSizeEndIndex - chunkStartIndex);
+		size_t chunkSize = std::stoul(chunkSizeStr, nullptr, 16); //need to change...
+
+		if (chunkSize == 0)
+			break;  // End of chunked data
+
+		size_t chunkDataStartIndex = chunkSizeEndIndex + 2;
+		size_t chunkDataEndIndex = chunkDataStartIndex + chunkSize;
+		if (chunkDataEndIndex > req.size())
+			throw 400;
+
+		body += req.substr(chunkDataStartIndex, chunkSize);
+		chunkStartIndex = chunkDataEndIndex + 2;
+	}
+	// std::cout << "THE BODY IS:" << std::endl;
+	// std::cout << body << std::endl;
+	// std::cout << "BODY ENDED" << std::endl;
+	return body;
+}
+
 bool	Serv::recvAll(int fd, std::string &request, std::string &body)
 {
 	char buffer[1024] = "";
 	int bytesRead;
 	bytesRead = recv(fd, buffer, sizeof(buffer), 0);
 	request.append(buffer, bytesRead);
-	//std::cout << request << std::endl;
 	if (request.find("\r\n\r\n") != std::string::npos)
 	{
 		if (request.find("POST") != std::string::npos)
 		{
-			if (request.find("Content-Length") == std::string::npos)
-				throw 411;
-			else
+			size_t bodyStartIndex = request.find("\r\n\r\n") + 4;
+			body += request.substr(bodyStartIndex, std::string::npos);
+			request.erase(bodyStartIndex, std::string::npos);
+			if (request.find("Content-Length") != std::string::npos)
 			{
-				if (!maxBodyTooSmall(getContentLen(request), request))
+				unsigned long contentLen = getContentLen(request);
+				if (!maxBodyTooSmall(contentLen, request))
 					throw 413;
-				size_t bodyStartIndex = request.find("\r\n\r\n") + 4;
-				body += request.substr(bodyStartIndex, std::string::npos);
-				request.erase(bodyStartIndex, std::string::npos);
-
-				// Check if the entire body has been received
-				if (body.size() >= getContentLen(request))
+				if (body.size() >= contentLen)
 					return true;
 			}
+			else if (request.find("Transfer-Encoding: chunked") != std::string::npos)
+			{
+				if (body.find("0\r\n\r\n") != std::string::npos)
+				{
+					body = chunkedBody(body);
+					return true;
+				}
+			}
+			else
+				throw 411;
 		}
 		else
 			return true;
@@ -230,11 +266,19 @@ void Serv::setEvent()
 	handledEvents(kq);
 }
 
+std::string Serv::sendError(int errorCode, std::string header)
+{
+	std::map<std::string, std::string> errorFiles;
+	ErrorHandler errHandler(errorCode, errorFiles, hostMatchingConfigs(header));
+	errHandler.generateBody();
+	HttpResponse errRes(errorCode, errHandler.getBody());
+	return errRes.toString();
+}
 
 void Serv::handledEvents(int kq)
 {
-	std::map<int, std::string> test;
-	std::map<int, struct sRequest> test2;
+	std::map<int, std::string> sendStrs;
+	std::map<int, struct sRequest> recvStrs;
 	std::deque<int>::iterator itr;
 	struct kevent evList[NEVENTS];
 	struct kevent evSet;
@@ -272,57 +316,49 @@ void Serv::handledEvents(int kq)
 					Serv::err("kevent");
 				
 				struct sRequest req;
-				test2[fd] = req;
+				recvStrs[fd] = req;
 			}
 			if (evList[i].filter == EVFILT_READ) {
 				fd = evList[i].ident;
-				// if (!isAvailable(fd))
-				// 	continue ;
-				if (test2.find(fd) != test2.end() && isAvailable(fd) && recvAll(fd, test2[fd].request, test2[fd].body))
+				if (recvStrs.find(fd) != recvStrs.end() && isAvailable(fd)) 
 				{
-					// std::cout << test2[fd].request << std::endl;
-					// std::cout << test2[fd].body << std::endl;
 					std::string response;
-					//std::cout << _body << std::endl;
 					try 
 					{
-						HttpReqParsing hReq(test2[fd].request, test2[fd].body, hostMatchingConfigs(test2[fd].request));
-						ReqHandler reqHandler(hostMatchingConfigs(test2[fd].request));
+						if (!recvAll(fd, recvStrs[fd].request, recvStrs[fd].body))
+							continue ;
+						HttpReqParsing hReq(recvStrs[fd].request, recvStrs[fd].body, hostMatchingConfigs(recvStrs[fd].request));
+						ReqHandler reqHandler(hostMatchingConfigs(recvStrs[fd].request));
 						response = reqHandler.handleRequest(hReq);
 					} 
 					catch (int errorCode)
 					{
-						std::map<std::string, std::string> test;
-						ErrorHandler errHandler(errorCode, test, hostMatchingConfigs(test2[fd].request));
-						errHandler.generateBody();
-						HttpResponse errRes(errorCode, errHandler.getBody());
-						response = errRes.toString();
+						response = sendError(errorCode, recvStrs[fd].request);
 					}
-					test[fd] = response;
-					test2[fd].request = "";
-					test2[fd].body = "";
+					std::cout << response << std::endl;
+					sendStrs[fd] = response;
+					recvStrs[fd].request = "";
+					recvStrs[fd].body = "";
 				}
-				//std::cout << response << std::endl;
 			}
 			if (evList[i].filter == EVFILT_WRITE)
 			{
 				fd = evList[i].ident;
-				if (test.find(fd) == test.end() || test[fd].empty())
+				if (sendStrs.find(fd) == sendStrs.end() || sendStrs[fd].empty())
 					continue;
-				if (test[fd].length() >= 1000) 
+				if (sendStrs[fd].length() >= 1000) 
 				{
-					int n = send(fd, test[fd].c_str(), 1000, 0);
-					test[fd].erase(0, n);
+					int n = send(fd, sendStrs[fd].c_str(), 1000, 0);
+					sendStrs[fd].erase(0, n);
 				}
 				else
 				{
-					int n = send(fd, test[fd].c_str(), test[fd].length(), 0);
-					test[fd].erase(0, n);
-					if (test[fd].empty())
-						test.erase(fd);
+					int n = send(fd, sendStrs[fd].c_str(), sendStrs[fd].length(), 0);
+					sendStrs[fd].erase(0, n);
+					if (sendStrs[fd].empty())
+						sendStrs.erase(fd);
 					close(fd);
 				}
-				//std::cout << test[fd].length() << std::endl;
 			}
 		}
 	}
