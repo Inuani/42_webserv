@@ -31,6 +31,6 @@ struct Settings
 
 void locs_debug(Location location);
 void setts_debug(Settings settings);
-void getConfig(std::vector<Settings> &setts);
+void getConfig(std::vector<Settings> &setts, std::string);
 
 #endif
