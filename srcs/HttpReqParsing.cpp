@@ -19,11 +19,14 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 
 
 void	HttpReqParsing::_splitUriWithLocations() {
+	//std::cout << "----------------- DEBUG START -----------------" << std::endl;
+	//std::cout << "Uri is " << _uri << std::endl;
 	for (std::vector<Location>::const_iterator it = _settings.location.begin(); it != _settings.location.end(); ++it)
 	{
 		if (_uri.find(it->path) == 0 && !(_uri.compare(0, it->path.length(), it->path)) && it->path.length() > _locationPath.length())
 			_locationPath = it->path;
 	}
+	//std::cout << "--- locationPath found is " << _locationPath << std::endl;
 	if (_uri.find(_locationPath) == 0)
 	{
 		_uri = _uri.substr(_locationPath.length());
@@ -32,8 +35,9 @@ void	HttpReqParsing::_splitUriWithLocations() {
 		_filedir = _reqLocation->root;
 		if (_filename.find("/") != 0)
 			_filename = "/" + _filename;
-		std::cout << "Full path : " << _filedir << " + " << _filename << std::endl;
+		//std::cout << "Full path : " << _filedir << " + " << _filename << std::endl;
 	}
+	//std::cout << "------------------ DEBUG END ------------------" << std::endl;
 }
 
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
@@ -42,17 +46,15 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	std::istringstream parseStream(strHeader);
 	std::string line;
 
-	// if (!std::getline(parseStream, line)) {
-	//     throw std::invalid_argument("Invalid HTTP request: no request line");
-	// }
 	std::getline(parseStream, line);
 	std::istringstream requestStream(line);
 
 	requestStream >> _method >> _uri >> _version;
 	if (_uri.length() > 8192)
 		throw 414;
-
-	// std::cout << "<--------------- new start --------------->" << std::endl;
+	
+	std::cout << "<--------------- new start --------------->" << std::endl;
+	std::cout << "start uri is : " << _uri << std::endl;
 	size_t pos = _uri.find('?');
 	if (pos != std::string::npos) {
 		_queryString = _uri.substr(pos + 1);
@@ -63,27 +65,29 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	pos = _uri.find('.');
 	if (pos != std::string::npos) {
 		_fileExt = _uri.substr(pos + 1);
-		// std::cout << _fileExt << std::endl;
+		std::cout << _fileExt << std::endl;
 	}
+
+	std::cout << "before pathinfo uri : "<< _uri << std::endl;
 
 	pos = _fileExt.find('/');
 	if (pos != std::string::npos) {
-		_pathInfo = _fileExt.substr(pos);
-		// std::cout << _pathInfo << std::endl;
+		_pathInfo = _fileExt.substr(pos, std::string::npos);
+		std::cout << "pathinfo is " << _pathInfo << std::endl;
 		_fileExt = _fileExt.substr(0, pos);
-		// std::cout << _fileExt << std::endl;
-		pos = _uri.find(_pathInfo);
-		_uri = _uri.substr(0, pos);
+		std::cout << "file ext is : " << _fileExt << std::endl;
+		pos = _uri.find_last_of(_pathInfo);
+		_uri = _uri.substr(0, pos - (_pathInfo.length() - 1));
 	}
 
 
 
 	std::cout << "initial uri : "<< _uri << std::endl;
 	_splitUriWithLocations();
-	std::cout << "transformed uri : "<< _uri << std::endl;
-	std::cout << "location path : "<< _locationPath << std::endl;
+	//std::cout << "transformed uri : "<< _uri << std::endl;
+	//std::cout << "location path : "<< _locationPath << std::endl;
 
-	// std::cout << "<--------------- new end --------------->" << std::endl;
+	std::cout << "<--------------- new end --------------->" << std::endl;
 
 	
 

@@ -26,13 +26,16 @@ void ErrorHandler::readFile(const std::string& path)
 	_body = ss.str();
 }
 
-std::string ErrorHandler::getErrorFile() const
+std::string ErrorHandler::getErrorFile()
 {
+	std::cout << "looking for " << _strStatusCode << "in map" << std::endl;
 	std::map<std::string, std::string>::const_iterator it = _errorFileMap.find(_strStatusCode);
 	if (it != _errorFileMap.end())
 	{
-		if (access(it->second.c_str(), R_OK) == 0)
-			return (it->second);
+		std::cout << "file to use is : " << it->second << std::endl;
+		std::string path = findFileLocation(it->second);
+		if (access(path.c_str(), R_OK) == 0)
+			return (path);
 	}
 	std::string defaultPath = "/www/error/" + _strStatusCode + ".html";
 	if (access(defaultPath.c_str(), R_OK) == 0)
@@ -43,10 +46,9 @@ std::string ErrorHandler::getErrorFile() const
 void ErrorHandler::generateBody()
 {
 	std::string path = getErrorFile();
-	//path = "/404.html";
+	std::cout << "path is " << path << std::endl;
 	if (!path.empty())
 	{
-		findFileLocation(path);
 		readFile(_filedir + _filename);
 	}
 	else
@@ -55,7 +57,7 @@ void ErrorHandler::generateBody()
 	}
 }
 
-void ErrorHandler::findFileLocation(const std::string& filePath)
+std::string ErrorHandler::findFileLocation(std::string filePath)
 {
 	_filename = filePath.substr(filePath.find_last_of('/'), std::string::npos);
 	_filedir = filePath.substr(0, filePath.find_last_of('/'));
@@ -79,4 +81,5 @@ void ErrorHandler::findFileLocation(const std::string& filePath)
 	}
 	else
 		_filedir = location->root;
+	return (_filedir + _filename);
 }

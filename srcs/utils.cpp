@@ -13,7 +13,8 @@ std::string readFileContent(const std::string& path) {
 	if (!file.is_open()) 
 	{
 		std::cerr << "Failed to open file: " << path << '\n';
-		ss << error404.rdbuf();
+		//ss << error404.rdbuf();
+		throw 404;
 	}
 	else
 		ss << file.rdbuf();

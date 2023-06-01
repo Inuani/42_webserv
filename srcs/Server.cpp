@@ -347,7 +347,7 @@ void Serv::handledEvents(int kq)
 						HttpResponse errRes(errorCode, errHandler.getBody());
 						response = errRes.toString(); 
 					}
-					std::cout << response << std::endl;
+					//std::cout << response << std::endl;
 					sendStrs[fd] = response;
 					recvStrs[fd].request = "";
 					recvStrs[fd].body = "";

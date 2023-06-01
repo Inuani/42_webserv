@@ -26,11 +26,13 @@ private:
 	const std::string	_postReqHandler(const HttpReqParsing& request);
 	const std::string	_deleteReqHandler(const HttpReqParsing& request);
 	const std::string	_defaultHandler(const HttpReqParsing& request);
+
+	std::string handleDirListing(std::string dirListing, std::string locIndex);
 	Settings			_settings;
 	const Location*		_reqLocation;
 	std::string			_filePath;
 	std::string			_fileName;
-
+	std::string			_fullPath;
 
 	// GetRequestHandler	getReqHandler;
 	// PostRequestHandler	postReqHandler;
