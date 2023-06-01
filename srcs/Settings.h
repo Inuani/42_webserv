@@ -22,7 +22,6 @@ struct Settings
 	std::size_t	max_body;
 	std::string	root;
 	std::string	index;
-	std::string	error;
 	std::string	server_name;
 	std::string dir_listing;
 	std::vector<Location> location;

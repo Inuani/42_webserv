@@ -6,7 +6,7 @@
 /*   By: mpouce <mpouce@student.42lausanne.ch>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/25 15:47:14 by mpouce            #+#    #+#             */
-/*   Updated: 2023/05/30 13:03:22 by mpouce           ###   ########.fr       */
+/*   Updated: 2023/06/01 16:15:19 by mpouce           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,8 +33,8 @@ private:
 	std::string _filedir;
 
 	void readFile(const std::string& path);
-	std::string getErrorFile() const;
-	void findFileLocation(const std::string& filePath);
+	std::string getErrorFile();
+	std::string findFileLocation(std::string filePath);
 
 	ErrorHandler();
 	ErrorHandler(const ErrorHandler& ref);
