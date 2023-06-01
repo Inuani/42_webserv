@@ -361,6 +361,9 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 	// 	throw 500;
 	// }
 
+	for(std::vector<char *>::iterator it = env.begin(); it != env.end(); ++it)
+		free(*it);
+	env.clear();
 	HttpResponse hRes(200, body);
 	for (std::multimap<std::string, std::string>::const_iterator it = headersMap.begin(); it != headersMap.end(); ++it) {
 		hRes.setHeaders(it->first, it->second);
