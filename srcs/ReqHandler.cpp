@@ -401,11 +401,13 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 std::string ReqHandler::_handleDirListing(std::string dirListing, std::string locIndex)
 {
 	std::cout << "location dirlisting is " << dirListing << std::endl;
-	if (opendir(_fullPath.c_str()) != NULL)
+	DIR* dirHandle = opendir(_fullPath.c_str());
+	if (dirHandle != NULL)
 	{
 		if (dirListing == "on")
 		{
 			const std::string dirContent = repertoryListing(_fullPath, _reqLocation);
+			closedir(dirHandle);
 			if (!dirContent.empty())
 			{
 				HttpResponse hRes(200, dirContent);
@@ -414,7 +416,11 @@ std::string ReqHandler::_handleDirListing(std::string dirListing, std::string lo
 			}
 		}
 		else if (locIndex.empty())
+		{
+			closedir(dirHandle);
 			throw 403;
+		}
+		closedir(dirHandle);
 	}
 	if (_fileName == "/")
 	{
