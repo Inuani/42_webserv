@@ -42,19 +42,25 @@ bool Serv::hostMatching(std::string host, std::vector<std::string> hosts_conf, i
 
 Settings &Serv::hostMatchingConfigs(std::string request)
 {
-	std::string host = getHost(request); //check if host empty?
+	std::string host = getHost(request);
+	if (host.empty())
+	{
+		std::cerr << "invalid request, host not found" << std::endl;
+		host = "localhost";
+	}
+	std::cout << "host is: " << host << std::endl;
 	for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		if (hostMatching(host, miniSplit(it->server_name), it->port))
 			return *it;
 	}
-	return _settings.front();
+	throw 421;
+	//return _settings.front();
 }
 
 Serv::Serv() {}
 
 Serv::~Serv() {}
-// void	serv::setSocket()
 
 void	Serv::settings_setter(std::vector<Settings> settings)
 {
@@ -99,20 +105,31 @@ bool	Serv::maxBodyTooSmall(unsigned long contentLen, std::string request)
 	{
 		ss.str(std::string());
 		ss << it->port;
-		//std::cout << "HOST NAME: " << it->server_name + ":" + ss.str() << std::endl;
-		// std::cout << "HOST: " << host << std::endl;
-		// std::cout << "content len: " << contentLen << std::endl;
-		// std::cout << "max_body: " << it->max_body << std::endl;
 		for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 		{
 			if ((hostMatching(host, miniSplit(it->server_name), it->port))
-					&& it->max_body && it->max_body < contentLen) // DEBUG COMPARISON
+					&& it->max_body && it->max_body < contentLen)
 			{
 				return false;
 			}
 		}
 	}
 	return true;
+}
+
+unsigned long my_stoul (std::string const& str, size_t *idx = 0, int base = 10) {
+	char *endp;
+	unsigned long value = strtoul(str.c_str(), &endp, base);
+	if (endp == str.c_str()) {
+		throw std::invalid_argument("my_stoul");
+	}
+	if (value == ULONG_MAX && errno == ERANGE) {
+		throw std::out_of_range("my_stoul");
+	}
+	if (idx) {
+		*idx = endp - str.c_str();
+	}
+	return value;
 }
 
 std::string Serv::chunkedBody(std::string req)
@@ -126,10 +143,10 @@ std::string Serv::chunkedBody(std::string req)
 			throw 400;
 
 		std::string chunkSizeStr = req.substr(chunkStartIndex, chunkSizeEndIndex - chunkStartIndex);
-		size_t chunkSize = std::stoul(chunkSizeStr, nullptr, 16); //need to change...
+		size_t chunkSize =my_stoul(chunkSizeStr, nullptr, 16);
 
 		if (chunkSize == 0)
-			break;  // End of chunked data
+			break;
 
 		size_t chunkDataStartIndex = chunkSizeEndIndex + 2;
 		size_t chunkDataEndIndex = chunkDataStartIndex + chunkSize;
@@ -139,9 +156,6 @@ std::string Serv::chunkedBody(std::string req)
 		body += req.substr(chunkDataStartIndex, chunkSize);
 		chunkStartIndex = chunkDataEndIndex + 2;
 	}
-	// std::cout << "THE BODY IS:" << std::endl;
-	// std::cout << body << std::endl;
-	// std::cout << "BODY ENDED" << std::endl;
 	return body;
 }
 
@@ -150,6 +164,11 @@ bool	Serv::recvAll(int fd, std::string &request, std::string &body)
 	char buffer[1024] = "";
 	int bytesRead;
 	bytesRead = recv(fd, buffer, sizeof(buffer), 0);
+	if (bytesRead == -1)
+	{
+		std::cerr << strerror(errno) << std::endl;
+		return false;
+	}
 	request.append(buffer, bytesRead);
 	if (request.find("\r\n\r\n") != std::string::npos)
 	{
@@ -171,6 +190,8 @@ bool	Serv::recvAll(int fd, std::string &request, std::string &body)
 				if (body.find("0\r\n\r\n") != std::string::npos)
 				{
 					body = chunkedBody(body);
+					if (!maxBodyTooSmall(body.size(), request))
+						throw 413;
 					return true;
 				}
 			}
@@ -188,7 +209,6 @@ void	Serv::setBindAddrinfo()
 	int fd;
 	int bol = 1;
 	struct addrinfo *p;
-	//int i = 0; // USELESS VAR ???
 	int status;
 	struct addrinfo hints;
 	
@@ -230,13 +250,10 @@ void	Serv::setBindAddrinfo()
 			break;
 		}
 
-		freeaddrinfo(_res); // free structure
+		freeaddrinfo(_res);
 
 		if (p == NULL)
-		{
 			Serv::err("server: failed to bind\n");
-			//exit(1);
-		}
 	}
 }
 
@@ -264,15 +281,6 @@ void Serv::setEvent()
 	}
 
 	handledEvents(kq);
-}
-
-std::string Serv::sendError(int errorCode, std::string header)
-{
-	std::map<std::string, std::string> errorFiles;
-	ErrorHandler errHandler(errorCode, errorFiles, hostMatchingConfigs(header));
-	errHandler.generateBody();
-	HttpResponse errRes(errorCode, errHandler.getBody());
-	return errRes.toString();
 }
 
 void Serv::handledEvents(int kq)
@@ -327,13 +335,17 @@ void Serv::handledEvents(int kq)
 					{
 						if (!recvAll(fd, recvStrs[fd].request, recvStrs[fd].body))
 							continue ;
-						HttpReqParsing hReq(recvStrs[fd].request, recvStrs[fd].body, hostMatchingConfigs(recvStrs[fd].request));
-						ReqHandler reqHandler(hostMatchingConfigs(recvStrs[fd].request));
+						Settings sett = hostMatchingConfigs(recvStrs[fd].request);
+						HttpReqParsing hReq(recvStrs[fd].request, recvStrs[fd].body, sett);
+						ReqHandler reqHandler(sett);
 						response = reqHandler.handleRequest(hReq);
 					} 
 					catch (int errorCode)
 					{
-						response = sendError(errorCode, recvStrs[fd].request);
+						ErrorHandler errHandler(errorCode, _settings.front().error_pages, _settings.front());
+						errHandler.generateBody();
+						HttpResponse errRes(errorCode, errHandler.getBody());
+						response = errRes.toString(); 
 					}
 					//std::cout << response << std::endl;
 					sendStrs[fd] = response;
@@ -349,11 +361,21 @@ void Serv::handledEvents(int kq)
 				if (sendStrs[fd].length() >= 1000) 
 				{
 					int n = send(fd, sendStrs[fd].c_str(), 1000, 0);
+					if (n == -1)
+					{
+						std::cerr << strerror(errno) << std::endl; // maybe close
+						continue ;
+					}
 					sendStrs[fd].erase(0, n);
 				}
 				else
 				{
 					int n = send(fd, sendStrs[fd].c_str(), sendStrs[fd].length(), 0);
+					if (n == -1)
+					{
+						std::cerr << strerror(errno) << std::endl; // maybe close
+						continue ;
+					}
 					sendStrs[fd].erase(0, n);
 					if (sendStrs[fd].empty())
 						sendStrs.erase(fd);

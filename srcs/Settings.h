@@ -22,7 +22,6 @@ struct Settings
 	std::size_t	max_body;
 	std::string	root;
 	std::string	index;
-	std::string	error;
 	std::string	server_name;
 	std::string dir_listing;
 	std::vector<Location> location;
@@ -32,6 +31,6 @@ struct Settings
 
 void locs_debug(Location location);
 void setts_debug(Settings settings);
-void getConfig(std::vector<Settings> &setts);
+void getConfig(std::vector<Settings> &setts, std::string);
 
 #endif

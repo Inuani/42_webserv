@@ -14,7 +14,6 @@ void setts_debug(struct Settings settings)
 {
 	std::cout << settings.port << std::endl;
 	std::cout << settings.max_body << std::endl;
-	std::cout << settings.error << std::endl;
 	std::cout << settings.server_name << std::endl;
 	std::cout << settings.root << std::endl;
 	std::cout << settings.index << std::endl;
@@ -37,9 +36,8 @@ void locs_debug(struct Location location)
 //max_body must be 0
 void default_sett(struct Settings &settings)
 {
-	settings.port = 0;
+	settings.port = 8080;
 	settings.max_body = 0;
-	//settings.error = "";
 }
 
 void default_loc(struct Location &location)
@@ -118,10 +116,21 @@ Settings create_settings(std::stringstream &file)
 				ssline >> word;
 				settings.index = word;
 			}
-			else if (line == "error") {
+			else if (line == "error_page") {
 				while(ssline >> line)
 					word += line;
-				settings.error = word;
+				std::cout << "error conf : " << word << std::endl;
+				std::string value = word.substr(word.find_last_of(',') + 1, std::string::npos);
+				std::cout << "value : " << value << std::endl;
+				size_t pos = word.find(",");
+				while (pos != std::string::npos)
+				{
+					std::string key = word.substr(0, pos);
+					word = word.substr(pos + 1, std::string::npos);
+					std::cout << "key : " << key << " | word : " << word << std::endl;
+					settings.error_pages[key] = value;
+					pos = word.find(",");
+				}
 			}
 			else if (line == "dir_listing") {
 				ssline >> word;
@@ -178,10 +187,13 @@ Settings create_settings(std::stringstream &file)
 	return settings;
 }
 
-void getConfig(std::vector<Settings> &setts)
+void getConfig(std::vector<Settings> &setts, std::string config)
 {
 	std::string line;
-	std::ifstream conf("webserv.conf");
+
+	if (config.empty())
+		config = "webserv.conf";
+	std::ifstream conf(config);
 	if (conf.fail())
 		std::cerr << "Config file: Error: " << strerror(errno) << std::endl;
 
