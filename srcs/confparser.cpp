@@ -29,7 +29,6 @@ void locs_debug(struct Location location)
 	std::cout << location.root << std::endl;
 	std::cout << location.index << std::endl;
 	std::cout << location.methods << std::endl;
-	std::cout << location.error << std::endl;
 	std::cout << location.ext << std::endl;
 	std::cout << location.dir_listing << std::endl;
 	
@@ -38,7 +37,7 @@ void locs_debug(struct Location location)
 //max_body must be 0
 void default_sett(struct Settings &settings)
 {
-	settings.port = 0;
+	settings.port = 8080;
 	settings.max_body = 0;
 	//settings.error = "";
 }
@@ -51,7 +50,6 @@ void default_loc(struct Location &location)
 	location.root = "";
 	location.index = "";
 	location.methods = "";
-	location.error = "";
 }
 
 Location create_location(std::stringstream &file, std::string path)
@@ -79,11 +77,6 @@ Location create_location(std::stringstream &file, std::string path)
 				while(ssline >> line)
 					word += line;
 				location.ext = word;
-			}
-			else if(line == "error") {
-				while(ssline >> line)
-					word += line;
-				location.error = word;
 			}
 			else if(line == "dir_listing") {
 				ssline >> word;
@@ -185,10 +178,13 @@ Settings create_settings(std::stringstream &file)
 	return settings;
 }
 
-void getConfig(std::vector<Settings> &setts)
+void getConfig(std::vector<Settings> &setts, std::string config)
 {
 	std::string line;
-	std::ifstream conf("webserv.conf");
+
+	if (config.empty())
+		config = "webserv.conf";
+	std::ifstream conf(config);
 	if (conf.fail())
 		std::cerr << "Config file: Error: " << strerror(errno) << std::endl;
 

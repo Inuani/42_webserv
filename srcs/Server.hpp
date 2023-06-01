@@ -63,7 +63,6 @@ class Serv
 		bool		recvAll(int fd, std::string &, std::string &);
 		bool		maxBodyTooSmall(unsigned long, std::string);
 
-		std::string sendError(int, std::string);
 		std::vector<std::string> miniSplit(std::string toSplit);
 		bool hostMatching(std::string host, std::vector<std::string> hosts_conf, int port);
 		Settings &hostMatchingConfigs(std::string);
