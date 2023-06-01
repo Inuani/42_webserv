@@ -29,7 +29,6 @@ void locs_debug(struct Location location)
 	std::cout << location.root << std::endl;
 	std::cout << location.index << std::endl;
 	std::cout << location.methods << std::endl;
-	std::cout << location.error << std::endl;
 	std::cout << location.ext << std::endl;
 	std::cout << location.dir_listing << std::endl;
 	
@@ -51,7 +50,6 @@ void default_loc(struct Location &location)
 	location.root = "";
 	location.index = "";
 	location.methods = "";
-	location.error = "";
 }
 
 Location create_location(std::stringstream &file, std::string path)
@@ -79,11 +77,6 @@ Location create_location(std::stringstream &file, std::string path)
 				while(ssline >> line)
 					word += line;
 				location.ext = word;
-			}
-			else if(line == "error") {
-				while(ssline >> line)
-					word += line;
-				location.error = word;
 			}
 			else if(line == "dir_listing") {
 				ssline >> word;

@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 	{
 		//setts_debug(*it); DEBUG
 		std::vector<Location> locs = it->location;
-		for(std::vector<Location>::iterator it2 = locs.begin(); it2 != locs.end(); it2++)
+		//for(std::vector<Location>::iterator it2 = locs.begin(); it2 != locs.end(); it2++)
 			//locs_debug(*it2); DEBUG
 	}
 

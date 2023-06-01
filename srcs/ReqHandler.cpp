@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "dirent.h"
 
 ReqHandler::ReqHandler() {}
 
@@ -16,37 +17,15 @@ ReqHandler::ReqHandler(const Settings& settings) : _settings(settings) {}
 const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 	if (_reqLocation)
 	{
-		if (_fileName == "/")
-		{
-			if (_reqLocation->dir_listing == "on")
-			{
-				const std::string dirContent = repertoryListing(_filePath, _reqLocation);
-				if (!dirContent.empty())
-				{
-					HttpResponse hRes(200, dirContent);
-					std::string response = hRes.toString();
-					return response;
-				}
-			}
-			_fileName = _reqLocation->index;
-		}
+		std::string response = handleDirListing(_reqLocation->dir_listing, _reqLocation->index);
+		if (!response.empty())
+			return (response);
 	}
 	else
 	{
-		if (_fileName == "/")
-		{
-			if (_settings.dir_listing == "on")
-			{
-				const std::string dirContent = repertoryListing(_filePath, _reqLocation);
-				if (!dirContent.empty())
-				{
-					HttpResponse hRes(200, dirContent);
-					std::string response = hRes.toString();
-					return response;
-				}
-			}
-			_fileName = _settings.index;
-		}
+		std::string response = handleDirListing(_settings.dir_listing, _settings.index);
+		if (!response.empty())
+			return (response);
 	}
 	std::string redirectYes = _settings.redirect[request.getUri()];
 	if (!redirectYes.empty())
@@ -157,7 +136,7 @@ const std::string	ReqHandler::_defaultHandler(const HttpReqParsing& request) {
 }
 
 const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
-	std::string fullPath = _filePath + _fileName;
+	_fullPath = _filePath + _fileName;
 	std::string serverPath;
 	if (_reqLocation)
 		serverPath = _reqLocation->path;
@@ -185,7 +164,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 		env.push_back(strdup(("DOCUMENT_ROOT=" + _reqLocation->root).c_str()));
 	else
 		env.push_back(strdup(("DOCUMENT_ROOT=" + _settings.root).c_str()));
-	env.push_back(strdup(("SCRIPT_FILENAME=" + fullPath).c_str()));
+	env.push_back(strdup(("SCRIPT_FILENAME=" + _fullPath).c_str()));
 	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
 	env.push_back(strdup(("PATH_INFO=" + request.getPathInfo()).c_str()));
 		// strdup("REMOTE_ADDR=" + request.getClientIP().c_str()), //is it needed sometimes ?
@@ -318,7 +297,7 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 	_filePath = request.getFileDir();
 	_fileName = request.getFileName();
 	_reqLocation = request.getFileLocation();
-	//std::string filePath = request.getUri();
+	_fullPath = _filePath + _fileName;
 	std::cout << "Full path in HandleRequest : " << _filePath << _fileName << std::endl;
 	if (_fileName.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
 		if (_reqLocation == NULL) 
@@ -343,6 +322,32 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 	// return _defaultHandler(request);
 }
 
+std::string ReqHandler::handleDirListing(std::string dirListing, std::string locIndex)
+{
+	std::cout << "location dirlisting is " << dirListing << std::endl;
+	if (opendir(_fullPath.c_str()) != NULL)
+	{
+		if (dirListing == "on")
+		{
+			const std::string dirContent = repertoryListing(_fullPath, _reqLocation);
+			if (!dirContent.empty())
+			{
+				HttpResponse hRes(200, dirContent);
+				std::string response = hRes.toString();
+				return response;
+			}
+		}
+		else if (locIndex.empty())
+			throw 403;
+	}
+	if (_fileName == "/")
+	{
+		if (dirListing == "off" && locIndex.empty())
+			throw 403;
+		_fileName = _reqLocation->index;
+	}
+	return ("");
+}
 
 ReqHandler::ReqHandler(const ReqHandler &src) {
 	*this = src;

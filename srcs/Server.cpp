@@ -335,7 +335,7 @@ void Serv::handledEvents(int kq)
 					{
 						response = sendError(errorCode, recvStrs[fd].request);
 					}
-					std::cout << response << std::endl;
+					//std::cout << response << std::endl;
 					sendStrs[fd] = response;
 					recvStrs[fd].request = "";
 					recvStrs[fd].body = "";
