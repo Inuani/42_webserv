@@ -47,14 +47,14 @@ void ErrorHandler::generateBody()
 {
 	std::string path = getErrorFile();
 	std::cout << "path is " << path << std::endl;
-	//if (!path.empty())
-	//{
-		//readFile(_filedir + _filename);
-	//}
-	//else
-	//{
+	if (!path.empty())
+	{
+		readFile(_filedir + _filename);
+	}
+	else
+	{
 		_body = _strStatusCode;
-	//}
+	}
 }
 
 std::string ErrorHandler::findFileLocation(std::string filePath)
