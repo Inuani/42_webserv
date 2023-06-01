@@ -24,19 +24,18 @@ private:
 	const std::string	_cgiHandler(const HttpReqParsing& request);
 	const std::string	_getReqHandler(const HttpReqParsing& request);
 	const std::string	_postReqHandler(const HttpReqParsing& request);
-	const std::string	_deleteReqHandler(const HttpReqParsing& request);
-	const std::string	_defaultHandler(const HttpReqParsing& request);
+	const std::string	_deleteReqHandler();
+	std::string			_handleDirListing(std::string dirListing, std::string locIndex);
+	std::vector<char *>	_setEnvCgi(const HttpReqParsing& request, std::string serverPath, std::vector<char *> env, std::string cookies);
+	void				_childCgi(int fd[2], const HttpReqParsing& request, std::vector<char *> env, char *args[]);
+	void				_handleCgiReponse(int fd[2], std::multimap<std::string, std::string>& headersMap, std::string& body);
 
-	std::string handleDirListing(std::string dirListing, std::string locIndex);
 	Settings			_settings;
 	const Location*		_reqLocation;
 	std::string			_filePath;
 	std::string			_fileName;
 	std::string			_fullPath;
 
-	// GetRequestHandler	getReqHandler;
-	// PostRequestHandler	postReqHandler;
-	// DefaultHandler		defaultHandler;
 };
 
 #endif

@@ -35,16 +35,6 @@ std::string getFileType(const std::string& filePath)
 		return it->second;
 	}
 	return "application/octet-stream";
-	// if (ext == ".html")
-	// 	fileType = "text/html";
-	// else if (ext == ".jpg")
-	// 	fileType = "image/jpeg";
-	// else if (ext == ".gif")
-	// 	fileType = "image/gif";
-	// else if (ext == ".ico")
-	// 	fileType = "image/x-icon";
-
-	// return (fileType);
 }
 
 int getResponseCode(const std::string& filePath)
@@ -104,7 +94,7 @@ const std::string	repertoryListing(const std::string directoryPath, const Locati
 			}
 			std::string link = name;
 			if (location)
-				link = location->path + "/" + name;
+				link = name;
 			if (entry->d_type == DT_DIR) {
 				link += "/";
 			}
