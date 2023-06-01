@@ -6,6 +6,15 @@ ErrorHandler::ErrorHandler(const int statusCode, const std::map<std::string, std
 	std::ostringstream oss;
 	oss << statusCode;
 	_strStatusCode = oss.str();
+	_hasSettings = 1;
+}
+
+ErrorHandler::ErrorHandler(const int statusCode) : _intStatusCode(statusCode)
+{
+	std::ostringstream oss;
+	oss << statusCode;
+	_strStatusCode = oss.str();
+	_hasSettings = 0;
 }
 
 ErrorHandler::~ErrorHandler(){}
@@ -28,6 +37,13 @@ void ErrorHandler::readFile(const std::string& path)
 
 std::string ErrorHandler::getErrorFile()
 {
+	if (_hasSettings == 0)
+	{
+		std::string defaultPath = "/www/error/" + _strStatusCode + ".html";
+		if (access(defaultPath.c_str(), R_OK) == 0)
+			return (defaultPath);
+		return ("");
+	}
 	std::cout << "looking for " << _strStatusCode << "in map" << std::endl;
 	std::map<std::string, std::string>::const_iterator it = _errorFileMap.find(_strStatusCode);
 	if (it != _errorFileMap.end())
