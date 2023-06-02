@@ -36,7 +36,6 @@ bool Serv::hostMatching(std::string host, std::vector<std::string> hosts_conf, i
 			host_conf_and_port = *it + ":" + ssport.str();
 		else
 			host_conf_and_port = *it;
-		std::cout << host_conf_and_port << std::endl;
 		if (host_conf_and_port == host)
 			return true;
 	}
@@ -47,11 +46,7 @@ Settings &Serv::hostMatchingConfigs(std::string request)
 {
 	std::string host = getHost(request);
 	if (host.empty())
-	{
 		std::cerr << "invalid request, host not found" << std::endl;
-		host = "localhost";
-	}
-	//std::cout << "host is: " << host << std::endl;
 	for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		if (hostMatching(host, miniSplit(it->server_name), it->port))
@@ -102,6 +97,7 @@ std::string	Serv::getHost(std::string header)
 bool	Serv::maxBodyTooSmall(unsigned long contentLen, std::string request)
 {
 	std::stringstream ss;
+	std::cout << "Calling getHost from mBTS" << std::endl;
 	std::string host = getHost(request);
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
@@ -168,7 +164,13 @@ bool	Serv::recvAll(int fd, std::string &request, std::string &body)
 	bytesRead = recv(fd, buffer, sizeof(buffer), 0);
 	if (bytesRead == -1)
 	{
+		close(fd);
 		std::cerr << strerror(errno) << std::endl;
+		return false;
+	}
+	if (bytesRead == 0)
+	{
+		close(fd);
 		return false;
 	}
 	request.append(buffer, bytesRead);
@@ -182,8 +184,6 @@ bool	Serv::recvAll(int fd, std::string &request, std::string &body)
 			if (request.find("Content-Length") != std::string::npos)
 			{
 				unsigned long contentLen = getContentLen(request);
-				if (!maxBodyTooSmall(contentLen, request))
-					throw 413;
 				if (body.size() >= contentLen)
 					return true;
 			}
@@ -255,8 +255,18 @@ void	Serv::setBindAddrinfo()
 		freeaddrinfo(_res);
 
 		if (p == NULL)
+		{
 			Serv::err("server: failed to bind\n");
+			exit(1);
+		}
 	}
+}
+
+int	Serv::noHeader(std::string request)
+{
+	if (request.find("HTTP") == std::string::npos)
+		return 1;
+	return (0);
 }
 
 void	Serv::srvListen()
@@ -349,6 +359,8 @@ void Serv::handledEvents(int kq)
 					{
 						if (!recvAll(fd, recvStrs[fd].request, recvStrs[fd].body))
 							continue ;
+						if (noHeader(recvStrs[fd].request))
+							continue;
 						Settings sett = hostMatchingConfigs(recvStrs[fd].request);
 						HttpReqParsing hReq(recvStrs[fd].request, recvStrs[fd].body, sett);
 						ReqHandler reqHandler(sett);
@@ -361,7 +373,7 @@ void Serv::handledEvents(int kq)
 							ErrorHandler errHandler(errorCode, sett.error_pages, sett);
 							errHandler.generateBody();
 							HttpResponse errRes(errorCode, errHandler.getBody());
-							response = errRes.toString(); 
+							response = errRes.toString();
 						}
 						catch (int errorCode)
 						{
@@ -412,11 +424,6 @@ void Serv::handledEvents(int kq)
 				if (timerEvents.find(fd) != timerEvents.end())
 				{
 					timerEvents.erase(fd);
-					// ErrorHandler errHandler(408);
-					// errHandler.generateBody();
-					// HttpResponse errRes(408, errHandler.getBody());
-					// sendStrs[fd] = errRes.toString();
-					// std::cout << "hi" << std::endl;
 					close(fd);
 				}
 			}

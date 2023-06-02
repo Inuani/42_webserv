@@ -14,7 +14,7 @@ HttpReqParsing::HttpReqParsing(const std::string& strHeader, const std::string& 
 	// std::cout << std::endl;
 	// std::cout << "<--------------- start body --------------->" << std::endl;
 	// std::cout << _body << std::endl;
-	std::cout << "<--------------- end request --------------->" << std::endl;
+	// std::cout << "<--------------- end request --------------->" << std::endl;
 }
 
 
@@ -45,7 +45,10 @@ void	HttpReqParsing::_splitUriWithLocations() {
 
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
 {
-
+	std::cout << "??" << std::endl;
+	if (getContentLen(strHeader) > _settings.max_body)
+		throw 413;
+	std::cout << (getContentLen(strHeader) << _settings.max_body) << std::endl;
 	std::istringstream parseStream(strHeader);
 	std::string line;
 
@@ -68,7 +71,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	pos = _uri.find('.');
 	if (pos != std::string::npos) {
 		_fileExt = _uri.substr(pos + 1);
-		std::cout << _fileExt << std::endl;
+		// std::cout << _fileExt << std::endl;
 	}
 
 	// std::cout << "before pathinfo uri : "<< _uri << std::endl;
@@ -87,7 +90,7 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 
 	// std::cout << "initial uri : "<< _uri << std::endl;
 	_splitUriWithLocations();
-	std::cout << "transformed uri : "<< _uri << std::endl;
+	// std::cout << "transformed uri : "<< _uri << std::endl;
 	//std::cout << "location path : "<< _locationPath << std::endl;
 
 	// std::cout << "<--------------- new end --------------->" << std::endl;
