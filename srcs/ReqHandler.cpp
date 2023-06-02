@@ -458,7 +458,10 @@ std::string ReqHandler::_handleDirListing(std::string dirListing, std::string lo
 	{
 		if (dirListing == "off" && locIndex.empty())
 			throw 403;
-		_fileName = _reqLocation->index;
+		if (_reqLocation)
+			_fileName = _reqLocation->index;
+		else
+			_fileName = _settings.index;
 	}
 	return ("");
 }
