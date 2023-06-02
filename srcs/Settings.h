@@ -20,6 +20,8 @@ struct Settings
 {
 	int port;
 	std::size_t	max_body;
+	std::string ext;
+	std::string methods;
 	std::string	root;
 	std::string	index;
 	std::string	server_name;

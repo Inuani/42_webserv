@@ -19,7 +19,6 @@ void setts_debug(struct Settings settings)
 	std::cout << settings.index << std::endl;
 	for (std::map<std::string, std::string>::iterator it = settings.redirect.begin() ; it != settings.redirect.end(); ++it)
 		std::cout << it-> first << " : " << it->second << std::endl;
-	//std::cout << settings. << std::endl;
 }
 
 void locs_debug(struct Location location)
@@ -100,7 +99,7 @@ Settings create_settings(std::stringstream &file)
 	std::string line;
 	std::string word;
 
-	//default_sett(settings); DEBUG
+	default_sett(settings);
 	while (std::getline(file, line))
 	{
 		std::istringstream ssline(line);
@@ -131,6 +130,16 @@ Settings create_settings(std::stringstream &file)
 					settings.error_pages[key] = value;
 					pos = word.find(",");
 				}
+			}
+			else if(line == "ext") {
+				while(ssline >> line)
+					word += line;
+				settings.ext = word;
+			}
+			else if(line == "methods") {
+				while(ssline >> line)
+					word += line;
+				settings.methods = word;
 			}
 			else if (line == "dir_listing") {
 				ssline >> word;
