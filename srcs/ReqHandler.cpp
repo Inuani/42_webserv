@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "dirent.h"
+#include <signal.h>
 
 ReqHandler::ReqHandler() {}
 
@@ -133,18 +134,14 @@ void	ReqHandler::_setEnvCgi(const HttpReqParsing& request, std::string& serverPa
 		std::ostringstream ss;
 		ss << "CONTENT_LENGTH=" << request.getBody().size();
 		env.push_back(ss.str());
-		// env.push_back("CONTENT_LENGTH=" + std::to_string(request.getBody().size()));
 	}
 	if (!cookies.empty()) {
 		env.push_back("HTTP_COOKIE=" + cookies);
 	}
-	// env.push_back(NULL);
 }
 
 void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector<std::string>& env, char *args[]) {
 	pid_t	pid = fork();
-	// for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++)
-	// 		std::cout << *it << std::endl;
 
 	if (pid == 0) {
 
@@ -154,9 +151,6 @@ void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector
 		}
 		c_env.push_back(NULL);
 
-		alarm(5);
-		signal(SIGALRM, exit);
-		
 		int bodyFd[2];
 		if (pipe(bodyFd) < 0) {
 			std::cerr << "Pipe Error" << std::endl;
@@ -182,13 +176,39 @@ void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector
 	}
 
 	int status;
-	waitpid(pid, &status, 0);
-	if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-		if (status == 1)
-			throw 504;
-		else
+	const int timeout = 3;
+	time_t start_time = time(0);
+
+	while (1)
+	{
+		pid_t result = waitpid(pid, &status, WNOHANG);
+		if (result == 0)
+		{
+			if (time(0) - start_time >= timeout)
+			{
+				kill(pid, SIGKILL);
+				throw 504;
+			}
+		}
+		else if (result < 0)
 			throw 500;
+		else
+		{
+			if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
+				throw 500;
+			break;
+		}
 	}
+
+	// int status;
+	// waitpid(pid, &status, 0);
+	// std::cout << "Status : " << status << std::endl;
+	// if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+	// 	if (status == 1)
+	// 		throw 504;
+	// 	else
+	// 		throw 500;
+	// }
 	close(fd[1]);
 }
 
@@ -396,7 +416,6 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 	_fileName = request.getFileName();
 	_reqLocation = request.getFileLocation();
 	_fullPath = _filePath + _fileName;
-	// std::cout << "Full path in HandleRequest : " << _filePath << _fileName << std::endl;
 	if (_fileName.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
 		if (_reqLocation == NULL) 
 		{
@@ -431,7 +450,6 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 
 std::string ReqHandler::_handleDirListing(std::string dirListing, std::string locIndex)
 {
-	// std::cout << "location dirlisting is " << dirListing << std::endl;
 	DIR* dirHandle = opendir(_fullPath.c_str());
 	if (dirHandle != NULL)
 	{
