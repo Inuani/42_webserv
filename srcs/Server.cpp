@@ -317,12 +317,12 @@ void Serv::handledEvents(int kq)
 		for (i = 0; i < nev; i++) {
 			if (evList[i].flags & EV_EOF) {
 				fd = evList[i].ident;
-				EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
-				EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
+				// EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+				// if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+				// 	Serv::err("kevent");
+				// EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+				// if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+				// 	Serv::err("kevent");
 				EV_SET(&evSet, fd, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
@@ -392,7 +392,9 @@ void Serv::handledEvents(int kq)
 			{
 				fd = evList[i].ident;
 				if (sendStrs.find(fd) == sendStrs.end() || sendStrs[fd].empty())
-					continue;
+					continue ;
+				if (!isAvailable(fd))
+					continue ;
 				if (sendStrs[fd].length() >= 1000) 
 				{
 					int n = send(fd, sendStrs[fd].c_str(), 1000, 0);

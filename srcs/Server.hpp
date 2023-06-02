@@ -47,6 +47,7 @@ class Serv
 		struct addrinfo *_res;
 		std::vector<Settings> _settings;
 		std::map<int, Settings> sockfd;
+		int noHeader(std::string request);
 		//std::string _response;
 
 	public:
