@@ -17,11 +17,10 @@ std::vector<std::string> Serv::miniSplit(std::string toSplit)
 		it = toSplit.find(",", it);
 		std::string token = toSplit.substr(pos, it);
 		split.push_back(token);
-		pos = it;
 		if (it == std::string::npos)
 			break;
 		it++;
-
+		pos = it;
 	}
 	return split;
 }
@@ -33,7 +32,11 @@ bool Serv::hostMatching(std::string host, std::vector<std::string> hosts_conf, i
 	ssport << port;
 	for (std::vector<std::string>::iterator it = hosts_conf.begin(); it != hosts_conf.end(); it++)
 	{
-		host_conf_and_port = *it + ":" + ssport.str();
+		if (ssport.str() != "80")
+			host_conf_and_port = *it + ":" + ssport.str();
+		else
+			host_conf_and_port = *it;
+		std::cout << host_conf_and_port << std::endl;
 		if (host_conf_and_port == host)
 			return true;
 	}
@@ -48,14 +51,13 @@ Settings &Serv::hostMatchingConfigs(std::string request)
 		std::cerr << "invalid request, host not found" << std::endl;
 		host = "localhost";
 	}
-	std::cout << "host is: " << host << std::endl;
+	//std::cout << "host is: " << host << std::endl;
 	for (std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
 		if (hostMatching(host, miniSplit(it->server_name), it->port))
 			return *it;
 	}
 	throw 421;
-	//return _settings.front();
 }
 
 Serv::Serv() {}
@@ -287,6 +289,8 @@ void Serv::handledEvents(int kq)
 {
 	std::map<int, std::string> sendStrs;
 	std::map<int, struct sRequest> recvStrs;
+	std::map<int, struct kevent> timerEvents;
+	struct kevent timerEv;
 	std::deque<int>::iterator itr;
 	struct kevent evList[NEVENTS];
 	struct kevent evSet;
@@ -309,7 +313,12 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
+				EV_SET(&evSet, fd, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
+				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
+					Serv::err("kevent");
 				close(fd);
+				sendStrs.erase(fd);
+				recvStrs.erase(fd);
 			}
 			if (sockfd.find(evList[i].ident) != sockfd.end()) {
 				fd = accept(evList[i].ident, (struct sockaddr *)&addr, &socklen);
@@ -323,6 +332,11 @@ void Serv::handledEvents(int kq)
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
 				
+				EV_SET(&timerEv, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0, 10 * 1000, NULL);
+				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
+					Serv::err("kevent");
+
+				timerEvents[fd] = timerEv;
 				struct sRequest req;
 				recvStrs[fd] = req;
 			}
@@ -342,12 +356,21 @@ void Serv::handledEvents(int kq)
 					} 
 					catch (int errorCode)
 					{
-						ErrorHandler errHandler(errorCode, _settings.front().error_pages, _settings.front());
-						errHandler.generateBody();
-						HttpResponse errRes(errorCode, errHandler.getBody());
-						response = errRes.toString(); 
+						try {
+							Settings sett = hostMatchingConfigs(recvStrs[fd].request);
+							ErrorHandler errHandler(errorCode, sett.error_pages, sett);
+							errHandler.generateBody();
+							HttpResponse errRes(errorCode, errHandler.getBody());
+							response = errRes.toString(); 
+						}
+						catch (int errorCode)
+						{
+							ErrorHandler errHandler(errorCode);
+							errHandler.generateBody();
+							HttpResponse errRes(errorCode, errHandler.getBody());
+							response = errRes.toString(); 
+						}
 					}
-					//std::cout << response << std::endl;
 					sendStrs[fd] = response;
 					recvStrs[fd].request = "";
 					recvStrs[fd].body = "";
@@ -363,7 +386,8 @@ void Serv::handledEvents(int kq)
 					int n = send(fd, sendStrs[fd].c_str(), 1000, 0);
 					if (n == -1)
 					{
-						std::cerr << strerror(errno) << std::endl; // maybe close
+						std::cerr << strerror(errno) << std::endl;
+						close(fd);
 						continue ;
 					}
 					sendStrs[fd].erase(0, n);
@@ -373,12 +397,26 @@ void Serv::handledEvents(int kq)
 					int n = send(fd, sendStrs[fd].c_str(), sendStrs[fd].length(), 0);
 					if (n == -1)
 					{
-						std::cerr << strerror(errno) << std::endl; // maybe close
+						std::cerr << strerror(errno) << std::endl;
+						close(fd);
 						continue ;
 					}
 					sendStrs[fd].erase(0, n);
 					if (sendStrs[fd].empty())
 						sendStrs.erase(fd);
+					close(fd);
+				}
+			}
+			if (evList[i].filter == EVFILT_TIMER) {
+				fd = evList[i].ident;
+				if (timerEvents.find(fd) != timerEvents.end())
+				{
+					timerEvents.erase(fd);
+					// ErrorHandler errHandler(408);
+					// errHandler.generateBody();
+					// HttpResponse errRes(408, errHandler.getBody());
+					// sendStrs[fd] = errRes.toString();
+					// std::cout << "hi" << std::endl;
 					close(fd);
 				}
 			}
