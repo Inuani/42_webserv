@@ -10,6 +10,7 @@ std::string		    getFileType(const std::string& filePath);
 int				    getResponseCode(const std::string& filePath);
 size_t			    getContentLen(const std::string& header);
 const Location*	    findLocationByPath(const Settings& set, const std::string& path);
-const std::string	repertoryListing(const std::string directoryPath, const Location* location);
+const std::string	repertoryListing(const Settings& set, std::string directoryPath);
+std::string getURLStart(const Settings& set, std::string directoryPath);
 
 #endif
