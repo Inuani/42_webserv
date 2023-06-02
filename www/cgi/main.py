@@ -63,7 +63,7 @@ def login(form):
         if verify_password(form["password"].value, i.split(":")[1]):
 
             print("Set-Cookie: TOKEN=" + i, end="\r\n\r\n")
-            print_file(PATH + "/index.html")
+            print_file(PATH + "/index1.html")
             exit(0)
     print("invalid credentials")
 
@@ -80,14 +80,14 @@ def signin(form):
     with open(PATH + "/pass.txt", 'a') as e:
         e.write(t + '\n')
     print("Set-Cookie: TOKEN=" + t, end="\r\n\r\n")
-    print_file(PATH + "/index.html")
+    print_file(PATH + "/index1.html")
 
 
 def main():
     if (get_cookie("TOKEN") != ''):
         lines = get_file(PATH + "/pass.txt").split("\n")
         if (get_cookie("TOKEN") in lines):
-            print_file(PATH + "/index.html")
+            print_file(PATH + "/index1.html")
             exit(0)
     if os.environ['REQUEST_METHOD'] == 'GET':
         if (os.environ['PATH_INFO'] == "/signin"):

@@ -27,7 +27,6 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 		if (!response.empty())
 			return (response);
 	}
-	std::cout << "-_-_-_-_-_-  "<< _filePath << std::endl;
 	std::string redirectYes = _settings.redirect[_fileName];
 	if (!redirectYes.empty())
 	{
@@ -39,6 +38,7 @@ const std::string	ReqHandler::_getReqHandler(const HttpReqParsing& request) {
 		_fileName = "/" + request.getQueryValue("file");
 	// else
 	// 	filePath.append(request.getUri());
+
 	std::string body = readFileContent(_filePath + _fileName);
 	HttpResponse hRes(200, body);
 	hRes.setHeaders("Content-Type", getFileType(_filePath + _fileName));
@@ -110,38 +110,49 @@ const std::string	ReqHandler::_deleteReqHandler() {
 	return "";
 }
 
-std::vector<char *>	ReqHandler::_setEnvCgi(const HttpReqParsing& request, std::string serverPath, std::vector<char *> env, std::string cookies)
+void	ReqHandler::_setEnvCgi(const HttpReqParsing& request, std::string& serverPath, std::vector<std::string>& env, std::string& cookies)
 {
-	env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
-	env.push_back(strdup(("QUERY_STRING=" + request.getMethod()).c_str()));
-	env.push_back(strdup(("SCRIPT_NAME=" + serverPath + _fileName).c_str())); // do not include query string
-	env.push_back(strdup(("REQUEST_URI=" + serverPath + _fileName + request.getQueryString()).c_str())); // do include query string
+	env.push_back("REQUEST_METHOD=" + request.getMethod());
+	env.push_back("QUERY_STRING=" + request.getMethod());
+	env.push_back("SCRIPT_NAME=" + serverPath + _fileName); // do not include query string
+	env.push_back("REQUEST_URI=" + serverPath + _fileName + request.getQueryString()); // do include query string
 	if (_reqLocation)
-		env.push_back(strdup(("DOCUMENT_ROOT=" + _reqLocation->root).c_str()));
+		env.push_back(("DOCUMENT_ROOT=" + _reqLocation->root).c_str());
 	else
-		env.push_back(strdup(("DOCUMENT_ROOT=" + _settings.root).c_str()));
-	env.push_back(strdup(("SCRIPT_FILENAME=" + _fullPath).c_str()));
-	env.push_back(strdup(("SERVER_PROTOCOL=" + request.getVersion()).c_str()));
-	env.push_back(strdup(("PATH_INFO=" + request.getPathInfo()).c_str()));
-	env.push_back(strdup(("SERVER_SOFTWARE=WebservGaming/1.0")));
-	env.push_back(strdup(("HTTP_USER_AGENT=" + request.getHeadersValue("User-Agent")).c_str()));
-	env.push_back(strdup(("HTTP_ACCEPT=" + request.getHeadersValue("Accept")).c_str()));
-	env.push_back(strdup(("HTTP_HOST=" + request.getHeadersValue("Host")).c_str()));
-	env.push_back(strdup("REDIRECT_STATUS=200"));
+		env.push_back("DOCUMENT_ROOT=" + _settings.root);
+	env.push_back("SCRIPT_FILENAME=" + _fullPath);
+	env.push_back("SERVER_PROTOCOL=" + request.getVersion());
+	env.push_back("PATH_INFO=" + request.getPathInfo());
+	env.push_back("SERVER_SOFTWARE=WebservGaming/1.0");
+	env.push_back("HTTP_USER_AGENT=" + request.getHeadersValue("User-Agent"));
+	env.push_back("HTTP_ACCEPT=" + request.getHeadersValue("Accept"));
+	env.push_back("HTTP_HOST=" + request.getHeadersValue("Host"));
+	env.push_back("REDIRECT_STATUS=200");
 	if (request.getMethod() == "POST") {
-		env.push_back(strdup(("CONTENT_TYPE=" + request.getHeadersValue("Content-Type")).c_str()));
-		env.push_back(strdup(("CONTENT_LENGTH=" + std::to_string(request.getBody().size())).c_str()));
+		env.push_back("CONTENT_TYPE=" + request.getHeadersValue("Content-Type"));
+		std::ostringstream ss;
+		ss << "CONTENT_LENGTH=" << request.getBody().size();
+		env.push_back(ss.str());
+		// env.push_back("CONTENT_LENGTH=" + std::to_string(request.getBody().size()));
 	}
 	if (!cookies.empty()) {
-		env.push_back(strdup(("HTTP_COOKIE=" + cookies).c_str()));
+		env.push_back("HTTP_COOKIE=" + cookies);
 	}
-	env.push_back(NULL);
-	return env;
+	// env.push_back(NULL);
 }
 
-void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector<char *> env, char *args[]) {
+void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector<std::string>& env, char *args[]) {
 	pid_t	pid = fork();
+	// for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++)
+	// 		std::cout << *it << std::endl;
+
 	if (pid == 0) {
+
+		std::vector<char*> c_env;
+		for(std::vector<std::string>::iterator it = env.begin(); it != env.end(); ++it) {
+			c_env.push_back((char *)(it->c_str()));
+		}
+		c_env.push_back(NULL);
 
 		alarm(5);
 		signal(SIGALRM, exit);
@@ -161,7 +172,7 @@ void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector
 		dup2(fd[1], STDOUT_FILENO);
 		close(fd[0]);
 		close(fd[1]);
-		if (execve(args[0], args, &env[0]) == -1) {
+		if (execve(args[0], args, &c_env[0]) == -1) {
 			std::cerr << "execve failed" << std::endl;
 			std::exit(2);
 		}
@@ -230,6 +241,8 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 	std::string serverPath;
 	if (_reqLocation)
 		serverPath = _reqLocation->path;
+	// else
+	// 	serverPath = _settings.root;
 	int fd[2];
 	if (pipe(fd) < 0) {
 		throw 500;
@@ -245,8 +258,13 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 	}
 
 	std::string cookies = request.getHeadersValue("Cookie");
-	std::vector<char *> env;
-	env = _setEnvCgi(request, serverPath, env, cookies);
+	std::vector<std::string> env;
+	_setEnvCgi(request, serverPath, env, cookies);
+	// for (std::vector<std::string>::iterator it = env.begin(); it != env.end(); it++)
+	// 	std::cout << *it << std::endl;
+
+	// std::vector<char*> env;
+	
 	// env.push_back(strdup(("REQUEST_METHOD=" + request.getMethod()).c_str()));
 	// env.push_back(strdup(("QUERY_STRING=" + request.getMethod()).c_str()));
 	// env.push_back(strdup(("SCRIPT_NAME=" + serverPath + _fileName).c_str())); // do not include query string
@@ -361,9 +379,9 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 	// 	throw 500;
 	// }
 
-	for(std::vector<char *>::iterator it = env.begin(); it != env.end(); ++it)
-		free(*it);
-	env.clear();
+	// for(std::vector<char *>::iterator it = env.begin(); it != env.end(); ++it)
+	// 	free(*it);
+	// env.clear();
 	HttpResponse hRes(200, body);
 	for (std::multimap<std::string, std::string>::const_iterator it = headersMap.begin(); it != headersMap.end(); ++it) {
 		hRes.setHeaders(it->first, it->second);
@@ -378,23 +396,33 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 	_fileName = request.getFileName();
 	_reqLocation = request.getFileLocation();
 	_fullPath = _filePath + _fileName;
-	std::cout << "Full path in HandleRequest : " << _filePath << _fileName << std::endl;
+	// std::cout << "Full path in HandleRequest : " << _filePath << _fileName << std::endl;
 	if (_fileName.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
 		if (_reqLocation == NULL) 
 		{
+			// we must have a CGI ?
 			// use settings
 		}
-		else if (_reqLocation->methods.find(request.getMethod()) == std::string::npos) {
-			std::cout << "405 Method Not Allowed" << std::endl;
+		else if (_reqLocation->methods.find(request.getMethod()) == std::string::npos)
 			throw 405;
-		}
 		return _cgiHandler(request);
 	}
-	if (request.getMethod() == "GET") {
+	if (request.getMethod() == "GET")
+	{
+		if (_reqLocation != NULL && _reqLocation->methods.find(request.getMethod()) == std::string::npos)
+			throw 405;
 		return _getReqHandler(request);
-	} else if (request.getMethod() == "POST") {
+	}
+	else if (request.getMethod() == "POST")
+	{
+		if (_reqLocation != NULL && _reqLocation->methods.find(request.getMethod()) == std::string::npos)
+			throw 405;
 		return _postReqHandler(request);
-	} else if (request.getMethod() == "DELETE") {
+	}
+	else if (request.getMethod() == "DELETE")
+	{
+		if (_reqLocation != NULL && _reqLocation->methods.find(request.getMethod()) == std::string::npos)
+			throw 405;
 		return _deleteReqHandler();
 	}
 	throw 501;
@@ -403,12 +431,13 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 
 std::string ReqHandler::_handleDirListing(std::string dirListing, std::string locIndex)
 {
-	std::cout << "location dirlisting is " << dirListing << std::endl;
+	// std::cout << "location dirlisting is " << dirListing << std::endl;
 	DIR* dirHandle = opendir(_fullPath.c_str());
 	if (dirHandle != NULL)
 	{
 		if (dirListing == "on")
 		{
+			std::cout << "Full path given to replisting func : "<< _fullPath << std::endl;
 			const std::string dirContent = repertoryListing(_fullPath, _reqLocation);
 			closedir(dirHandle);
 			if (!dirContent.empty())

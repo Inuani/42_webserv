@@ -53,8 +53,8 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 	if (_uri.length() > 8192)
 		throw 414;
 	
-	std::cout << "<--------------- new start --------------->" << std::endl;
-	std::cout << "start uri is : " << _uri << std::endl;
+	// std::cout << "<--------------- new start --------------->" << std::endl;
+	// std::cout << "start uri is : " << _uri << std::endl;
 	size_t pos = _uri.find('?');
 	if (pos != std::string::npos) {
 		_queryString = _uri.substr(pos + 1);
@@ -68,26 +68,26 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 		std::cout << _fileExt << std::endl;
 	}
 
-	std::cout << "before pathinfo uri : "<< _uri << std::endl;
+	// std::cout << "before pathinfo uri : "<< _uri << std::endl;
 
 	pos = _fileExt.find('/');
 	if (pos != std::string::npos) {
 		_pathInfo = _fileExt.substr(pos, std::string::npos);
-		std::cout << "pathinfo is " << _pathInfo << std::endl;
+		// std::cout << "pathinfo is " << _pathInfo << std::endl;
 		_fileExt = _fileExt.substr(0, pos);
-		std::cout << "file ext is : " << _fileExt << std::endl;
+		// std::cout << "file ext is : " << _fileExt << std::endl;
 		pos = _uri.find_last_of(_pathInfo);
 		_uri = _uri.substr(0, pos - (_pathInfo.length() - 1));
 	}
 
 
 
-	std::cout << "initial uri : "<< _uri << std::endl;
+	// std::cout << "initial uri : "<< _uri << std::endl;
 	_splitUriWithLocations();
 	//std::cout << "transformed uri : "<< _uri << std::endl;
 	//std::cout << "location path : "<< _locationPath << std::endl;
 
-	std::cout << "<--------------- new end --------------->" << std::endl;
+	// std::cout << "<--------------- new end --------------->" << std::endl;
 
 	
 
@@ -99,16 +99,11 @@ void HttpReqParsing::_parseHeader(const std::string& strHeader)
 
 	// std::cout << "<--------------- start request --------------->" << std::endl;
 	// std::cout << _method << " " << _uri << " " << _version << std::endl;	
-	// if (!_queryString.empty()) {
-	// 	std::cout << "query string : " << _queryString << std::endl;	
-	// }
+
 
 	while (std::getline(parseStream, line) && line != "\r") {
 		std::istringstream headerStream(line);
 		std::string key, value;
-		// if (!std::getline(headerStream, key, ':')) {
-        //     throw ...
-        // }
 		std::getline(headerStream, key, ':');
 		key.erase(key.find_last_not_of(" \n\r\t") + 1);
 		std::getline(headerStream, value);
