@@ -438,7 +438,7 @@ std::string ReqHandler::_handleDirListing(std::string dirListing, std::string lo
 		if (dirListing == "on")
 		{
 			std::cout << "Full path given to replisting func : "<< _fullPath << std::endl;
-			const std::string dirContent = repertoryListing(_fullPath, _reqLocation);
+			const std::string dirContent = repertoryListing(_settings, _fullPath);
 			closedir(dirHandle);
 			if (!dirContent.empty())
 			{
