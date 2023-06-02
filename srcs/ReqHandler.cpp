@@ -130,7 +130,10 @@ void	ReqHandler::_setEnvCgi(const HttpReqParsing& request, std::string& serverPa
 	env.push_back("REDIRECT_STATUS=200");
 	if (request.getMethod() == "POST") {
 		env.push_back("CONTENT_TYPE=" + request.getHeadersValue("Content-Type"));
-		env.push_back("CONTENT_LENGTH=" + std::to_string(request.getBody().size()));
+		std::ostringstream ss;
+		ss << "CONTENT_LENGTH=" << request.getBody().size();
+		env.push_back(ss.str());
+		// env.push_back("CONTENT_LENGTH=" + std::to_string(request.getBody().size()));
 	}
 	if (!cookies.empty()) {
 		env.push_back("HTTP_COOKIE=" + cookies);
@@ -238,6 +241,8 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 	std::string serverPath;
 	if (_reqLocation)
 		serverPath = _reqLocation->path;
+	// else
+	// 	serverPath = _settings.root;
 	int fd[2];
 	if (pipe(fd) < 0) {
 		throw 500;
@@ -391,23 +396,33 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 	_fileName = request.getFileName();
 	_reqLocation = request.getFileLocation();
 	_fullPath = _filePath + _fileName;
-	std::cout << "Full path in HandleRequest : " << _filePath << _fileName << std::endl;
+	// std::cout << "Full path in HandleRequest : " << _filePath << _fileName << std::endl;
 	if (_fileName.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
 		if (_reqLocation == NULL) 
 		{
+			// we must have a CGI ?
 			// use settings
 		}
-		else if (_reqLocation->methods.find(request.getMethod()) == std::string::npos) {
-			std::cout << "405 Method Not Allowed" << std::endl;
+		else if (_reqLocation->methods.find(request.getMethod()) == std::string::npos)
 			throw 405;
-		}
 		return _cgiHandler(request);
 	}
-	if (request.getMethod() == "GET") {
+	if (request.getMethod() == "GET")
+	{
+		if (_reqLocation != NULL && _reqLocation->methods.find(request.getMethod()) == std::string::npos)
+			throw 405;
 		return _getReqHandler(request);
-	} else if (request.getMethod() == "POST") {
+	}
+	else if (request.getMethod() == "POST")
+	{
+		if (_reqLocation != NULL && _reqLocation->methods.find(request.getMethod()) == std::string::npos)
+			throw 405;
 		return _postReqHandler(request);
-	} else if (request.getMethod() == "DELETE") {
+	}
+	else if (request.getMethod() == "DELETE")
+	{
+		if (_reqLocation != NULL && _reqLocation->methods.find(request.getMethod()) == std::string::npos)
+			throw 405;
 		return _deleteReqHandler();
 	}
 	throw 501;
@@ -416,12 +431,13 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 
 std::string ReqHandler::_handleDirListing(std::string dirListing, std::string locIndex)
 {
-	std::cout << "location dirlisting is " << dirListing << std::endl;
+	// std::cout << "location dirlisting is " << dirListing << std::endl;
 	DIR* dirHandle = opendir(_fullPath.c_str());
 	if (dirHandle != NULL)
 	{
 		if (dirListing == "on")
 		{
+			std::cout << "Full path given to replisting func : "<< _fullPath << std::endl;
 			const std::string dirContent = repertoryListing(_fullPath, _reqLocation);
 			closedir(dirHandle);
 			if (!dirContent.empty())

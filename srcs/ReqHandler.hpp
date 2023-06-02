@@ -26,7 +26,7 @@ private:
 	const std::string	_postReqHandler(const HttpReqParsing& request);
 	const std::string	_deleteReqHandler();
 	std::string			_handleDirListing(std::string dirListing, std::string locIndex);
-	void	_setEnvCgi(const HttpReqParsing& request, std::string& serverPath, std::vector<std::string>& env, std::string& cookies);
+	void				_setEnvCgi(const HttpReqParsing& request, std::string& serverPath, std::vector<std::string>& env, std::string& cookies);
 	void				_childCgi(int fd[2], const HttpReqParsing& request, std::vector<std::string>& env, char *args[]);
 	void				_handleCgiReponse(int fd[2], std::multimap<std::string, std::string>& headersMap, std::string& body);
 
