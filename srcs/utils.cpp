@@ -76,14 +76,43 @@ const Location* findLocationByRoot(const Settings& set, const std::string& root)
 	return (NULL);
 }
 
-const std::string	repertoryListing(const std::string directoryPath, const Location* location)
+std::string getURLStart(const Settings& set, std::string directoryPath)
+{
+	std::string extraPath;
+	std::string locationRoot = directoryPath;
+	const Location* location;
+	while (locationRoot.find("/") != std::string::npos)
+	{
+		location = findLocationByRoot(set, locationRoot);
+		if (location)
+		{
+			break;
+		}
+		extraPath = locationRoot.substr(locationRoot.find_last_of('/'), std::string::npos) + extraPath;
+		locationRoot = locationRoot.substr(0, locationRoot.find_last_of('/'));
+	}
+	if (location == NULL)
+	{
+		// if there is a root directory in the settings, and it is at the start of the path, we replace it with a simple /
+		if (!set.root.empty() && directoryPath.find(set.root.c_str(), 0, set.root.length() - 1))
+		{
+			extraPath = directoryPath.substr(set.root.length() - 1, std::string::npos);
+			locationRoot = "/";
+		}
+	}
+	else
+		locationRoot = location->path;
+	return (locationRoot + extraPath);
+}
+
+const std::string	repertoryListing(const Settings& set, std::string directoryPath)
 {
 	std::stringstream	htmlFile;
 	DIR* 				dir;
 	struct dirent*		entry;
 
 	std::cout << "dirPath is : " << directoryPath << std::endl;
-	//std::string urlStart;
+	std::string urlStart = getURLStart(set, directoryPath);
 	if ((dir = opendir(directoryPath.c_str())) != NULL)
 	{
 		htmlFile << "<!DOCTYPE html>";
@@ -107,12 +136,10 @@ const std::string	repertoryListing(const std::string directoryPath, const Locati
 			}
 			std::string link = name;
 			std::cout << "link is " << link << std::endl;
-			if (location)
-				link = name;
 			if (entry->d_type == DT_DIR) {
 				link += "/";
 			}
-			htmlFile << "<a href=\"" << "/cgi/error/" << "\">" << name << "</a><br>";
+			htmlFile << "<a href=\"" << urlStart + link << "\">" << name << "</a><br>";
 		}
 		htmlFile << "</body></html>";
 		closedir(dir);
