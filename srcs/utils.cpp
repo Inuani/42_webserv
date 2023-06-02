@@ -65,6 +65,17 @@ const Location* findLocationByPath(const Settings& set, const std::string& path)
 	return NULL;
 }
 
+const Location* findLocationByRoot(const Settings& set, const std::string& root)
+{
+	std::vector<Location>::const_iterator it;
+	for (it = set.location.begin(); it != set.location.end(); it++)
+	{
+		if (it->root == root)
+			return &(*it);
+	}
+	return (NULL);
+}
+
 const std::string	repertoryListing(const std::string directoryPath, const Location* location)
 {
 	std::stringstream	htmlFile;
@@ -72,6 +83,7 @@ const std::string	repertoryListing(const std::string directoryPath, const Locati
 	struct dirent*		entry;
 
 	std::cout << "dirPath is : " << directoryPath << std::endl;
+	//std::string urlStart;
 	if ((dir = opendir(directoryPath.c_str())) != NULL)
 	{
 		htmlFile << "<!DOCTYPE html>";
@@ -94,12 +106,13 @@ const std::string	repertoryListing(const std::string directoryPath, const Locati
 				continue;
 			}
 			std::string link = name;
+			std::cout << "link is " << link << std::endl;
 			if (location)
 				link = name;
 			if (entry->d_type == DT_DIR) {
 				link += "/";
 			}
-			htmlFile << "<a href=\"" << link << "\">" << name << "</a><br>";
+			htmlFile << "<a href=\"" << "/cgi/error/" << "\">" << name << "</a><br>";
 		}
 		htmlFile << "</body></html>";
 		closedir(dir);
