@@ -133,6 +133,8 @@ void	ReqHandler::_setEnvCgi(const HttpReqParsing& request, std::string& serverPa
 	if (!cookies.empty()) {
 		env.push_back("HTTP_COOKIE=" + cookies);
 	}
+	std::cout << serverPath << " | " << _fileName << std::endl;
+	std::cout << _reqLocation->root << std::endl;
 }
 
 void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector<std::string>& env, char *args[]) {
@@ -244,10 +246,17 @@ void	ReqHandler::_handleCgiReponse(int fd[2], std::multimap<std::string, std::st
 
 const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 	std::string serverPath;
+	std::string fileRoot;
 	if (_reqLocation)
+	{
 		serverPath = _reqLocation->path;
-	// else
-	// 	serverPath = _settings.root;
+		fileRoot = _reqLocation->root;
+	}
+	else
+		fileRoot = _settings.root;
+	std::string fullFilePath = fileRoot + _fileName;
+	if (access(fullFilePath.c_str(), 0) != 0)
+		throw 404;
 	int fd[2];
 	if (pipe(fd) < 0) {
 		throw 500;
@@ -264,6 +273,7 @@ const std::string	ReqHandler::_cgiHandler(const HttpReqParsing& request) {
 
 	std::string cookies = request.getHeadersValue("Cookie");
 	std::vector<std::string> env;
+	
 	_setEnvCgi(request, serverPath, env, cookies);
 
 	_childCgi(fd, request, env, args);
