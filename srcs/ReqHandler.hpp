@@ -35,7 +35,6 @@ private:
 	std::string			_filePath;
 	std::string			_fileName;
 	std::string			_fullPath;
-
 };
 
 #endif
