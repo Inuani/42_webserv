@@ -2,10 +2,6 @@
 #include <iostream>
 #include <sstream>
 
-// HttpResponse::HttpResponse(int status, const std::string& body, const std::string& contentType) 
-// 	: _status(status), _body(body), _contentType(contentType) {
-// }
-
 HttpResponse::HttpResponse(int status, const std::string& body) 
 	: _status(status), _body(body) {
 }
@@ -75,11 +71,6 @@ const char*	HttpResponse::getStatusMessage(int status) const {
 void	HttpResponse::setHeaders(const std::string& key, const std::string& value){
 	_headers.insert(std::make_pair(key, value));
 }
-
-// void HttpResponse::setLocationHeader(const std::string& location) {
-// 	_location = location;
-// }
-
 
 HttpResponse::HttpResponse() {}
 
