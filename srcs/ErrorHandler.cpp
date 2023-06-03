@@ -39,9 +39,11 @@ std::string ErrorHandler::getErrorFile()
 {
 	if (_hasSettings == 0)
 	{
-		std::string defaultPath = "/www/error/" + _strStatusCode + ".html";
+		std::string defaultPath = "./www/error/" + _strStatusCode + ".html";
+		std::cout << "accessing : " << defaultPath << std::endl;
 		if (access(defaultPath.c_str(), R_OK) == 0)
 			return (defaultPath);
+		std::cout << "no." << std::endl;
 		return ("");
 	}
 	std::map<std::string, std::string>::const_iterator it = _errorFileMap.find(_strStatusCode);
@@ -51,7 +53,7 @@ std::string ErrorHandler::getErrorFile()
 		if (access(path.c_str(), R_OK) == 0)
 			return (path);
 	}
-	std::string defaultPath = "/www/error/" + _strStatusCode + ".html";
+	std::string defaultPath = "./www/error/" + _strStatusCode + ".html";
 	if (access(defaultPath.c_str(), R_OK) == 0)
 		return (defaultPath);
 	return ("");
@@ -62,7 +64,7 @@ void ErrorHandler::generateBody()
 	std::string path = getErrorFile();
 	if (!path.empty())
 	{
-		readFile(_filedir + _filename);
+		readFile(path);
 	}
 	else
 	{

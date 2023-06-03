@@ -115,6 +115,8 @@ const std::string	repertoryListing(const Settings& set, std::string directoryPat
 	struct dirent*		entry;
 
 	std::string urlStart = getURLStart(set, directoryPath);
+	if (urlStart.back() != '/')
+		urlStart += "/";
 	if ((dir = opendir(directoryPath.c_str())) != NULL)
 	{
 		htmlFile << "<!DOCTYPE html>";

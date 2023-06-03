@@ -318,10 +318,7 @@ void Serv::handledEvents(int kq)
 				fd = evList[i].ident;
 				EV_SET(&evSet, fd, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
-				EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
+					Serv::err("kevent : unable to delete timer.");
 				close(fd);
 				sendStrs.erase(fd);
 				recvStrs.erase(fd);
@@ -329,13 +326,13 @@ void Serv::handledEvents(int kq)
 			if (sockfd.find(evList[i].ident) != sockfd.end()) {
 				fd = accept(evList[i].ident, (struct sockaddr *)&addr, &socklen);
 				if (fd == -1)
-					Serv::err("accept");
+					Serv::err("accept : could not connect to socket.");
 				EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
+					Serv::err("kevent : unable to add read event.");
 				EV_SET(&timerEv, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0, 10 * 1000, NULL);
 				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
+					Serv::err("kevent : unable to add timer event.");
 				timerEvents[fd] = timerEv;
 				struct sRequest req;
 				recvStrs[fd] = req;
@@ -378,10 +375,10 @@ void Serv::handledEvents(int kq)
 					recvStrs[fd].body = "";
 					EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
 					if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-						Serv::err("kevent");
+						Serv::err("kevent : write event could not be set.");
 					EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 					if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-						Serv::err("kevent");
+						Serv::err("kevent : read event could not be deleted.");
 				}
 			}
 			if (evList[i].filter == EVFILT_WRITE)
