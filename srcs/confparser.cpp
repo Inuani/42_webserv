@@ -118,15 +118,12 @@ Settings create_settings(std::stringstream &file)
 			else if (line == "error_page") {
 				while(ssline >> line)
 					word += line;
-				std::cout << "error conf : " << word << std::endl;
 				std::string value = word.substr(word.find_last_of(',') + 1, std::string::npos);
-				std::cout << "value : " << value << std::endl;
 				size_t pos = word.find(",");
 				while (pos != std::string::npos)
 				{
 					std::string key = word.substr(0, pos);
 					word = word.substr(pos + 1, std::string::npos);
-					std::cout << "key : " << key << " | word : " << word << std::endl;
 					settings.error_pages[key] = value;
 					pos = word.find(",");
 				}
@@ -173,7 +170,6 @@ Settings create_settings(std::stringstream &file)
 			else if(line == "location")
 			{
 				ssline >> line;
-				//create_location(file, line);
 				settings.location.push_back(create_location(file, line));
 			}
 			else if (line == "redirect")
@@ -214,90 +210,3 @@ void getConfig(std::vector<Settings> &setts, std::string config)
 			setts.push_back(create_settings(file));
 	}
 }
-
-
-// void handleRoot(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	stream >> settings.root;
-// }
-
-// void handleIndex(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	 stream >> settings.index;
-// }
-
-// void handleError(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	std::string word;
-// 	while(stream >> word)
-// 		settings.error += word;
-// }
-
-// void handleDirListing(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	stream >> settings.dir_listing;
-// }
-
-// void handleListen(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	size_t number;
-// 	stream >> number;
-// 	if ((number <= 65535) && (number >= 0))
-// 		settings.port = number;
-// 	else {
-// 		std::cerr << "Invalid port number" << std::endl;
-// 		exit(1);
-// 	}
-// }
-
-// void handleMaxBody(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	size_t number;
-// 	stream >> number;
-// 	if (number > (size_t)1000000000000000000) {
-// 		std::cerr << "MAX_BODY TOO BIG" << std::endl;
-// 		exit(1);
-// 	}
-// 	settings.max_body = number;
-// }
-
-// void handleServerName(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	std::string word;
-// 	while(stream >> word)
-// 		settings.server_name += word;
-// }
-
-// void handleLocation(std::istringstream& stream, Settings& settings, std::stringstream& file) {
-// 	std::string line;
-// 	stream >> line;
-// 	settings.location.push_back(create_location(file, line));
-// }
-
-// typedef void (*settingFunc)(std::istringstream&, Settings&, std::stringstream&);
-// std::map<std::string, settingFunc> handlers;
-
-// void initHandlersMap() {
-// 	handlers["root"] = handleRoot;
-// 	handlers["index"] = handleIndex;
-// 	handlers["error"] = handleError;
-// 	handlers["dir_listing"] = handleDirListing;
-// 	handlers["listen"] = handleListen;
-// 	handlers["max_body"] = handleMaxBody;
-// 	handlers["server_name"] = handleServerName;
-// 	handlers["location"] = handleLocation;
-// }
-
-// Settings create_settings(std::stringstream &file) {
-// 	Settings settings;
-// 	size_t number;
-// 	std::string line;
-// 	std::string word;
-
-// 	default_sett(settings);
-// 	while (std::getline(file, line))
-// 	{
-// 		std::istringstream ssline(line);
-// 		while (ssline >> word)
-// 		{
-// 			if (handlers.count(word))
-// 				handlers[word](ssline, settings, file);
-// 			else if (word == "}")
-// 				return settings;
-// 		}
-// 	}
-// 	return settings;
-// }
