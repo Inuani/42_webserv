@@ -11,7 +11,6 @@ class HttpReqParsing {
 
 public:
 	HttpReqParsing(const std::string& strHeader, const std::string& strBody, const Settings& settings);
-	// HttpReqParsing(const std::string& strHeader, const std::string& strBody);
 	HttpReqParsing(const std::string& strHttpRequest);
 	~HttpReqParsing();
 
