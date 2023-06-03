@@ -97,7 +97,6 @@ std::string	Serv::getHost(std::string header)
 bool	Serv::maxBodyTooSmall(unsigned long contentLen, std::string request)
 {
 	std::stringstream ss;
-	std::cout << "Calling getHost from mBTS" << std::endl;
 	std::string host = getHost(request);
 	for(std::vector<Settings>::iterator it = _settings.begin(); it != _settings.end(); it++)
 	{
@@ -231,21 +230,21 @@ void	Serv::setBindAddrinfo()
 		for(p = _res; p != NULL; p = p->ai_next) {
 			if ((fd = socket(p->ai_family, p->ai_socktype,
 					p->ai_protocol)) == -1) {
-				std::cerr << "server: socket" << std::endl;
+				err("server: socket");
 				continue;
 			}
 
 			if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &bol,
 					sizeof(int)) == -1)
-				Serv::err("setsockopt");
+				err("setsockopt");
 
 			if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
-				Serv::err("fcntl");
+				err("fcntl");
 			}
 
 			if (bind(fd, p->ai_addr, p->ai_addrlen) == -1) {
 				close(fd);
-				std::cerr << "server: bind" << std::endl;
+				err("server: bind");
 				continue;
 			}
 			sockfd[fd] = *it;
@@ -256,7 +255,7 @@ void	Serv::setBindAddrinfo()
 
 		if (p == NULL)
 		{
-			Serv::err("server: failed to bind\n");
+			err("server: failed to bind\n");
 			exit(1);
 		}
 	}
@@ -289,7 +288,7 @@ void Serv::setEvent()
 	{
 		EV_SET(&evSet, it->first, EVFILT_READ, EV_ADD, 0, 0, NULL);
 		if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-			Serv::err("kevent");
+			err("kevent");
 	}
 
 	handledEvents(kq);
@@ -317,14 +316,11 @@ void Serv::handledEvents(int kq)
 		for (i = 0; i < nev; i++) {
 			if (evList[i].flags & EV_EOF) {
 				fd = evList[i].ident;
-				// EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-				// if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-				// 	Serv::err("kevent");
-				// EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-				// if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-				// 	Serv::err("kevent");
 				EV_SET(&evSet, fd, EVFILT_TIMER, EV_DELETE, 0, 0, NULL);
 				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
+					Serv::err("kevent");
+				EV_SET(&evSet, fd, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
+				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
 				close(fd);
 				sendStrs.erase(fd);
@@ -337,15 +333,9 @@ void Serv::handledEvents(int kq)
 				EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
 				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
-
-				EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-				if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
-					Serv::err("kevent");
-				
 				EV_SET(&timerEv, fd, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0, 10 * 1000, NULL);
 				if (kevent(kq, &timerEv, 1, NULL, 0, NULL) == -1)
 					Serv::err("kevent");
-
 				timerEvents[fd] = timerEv;
 				struct sRequest req;
 				recvStrs[fd] = req;
@@ -386,6 +376,12 @@ void Serv::handledEvents(int kq)
 					sendStrs[fd] = response;
 					recvStrs[fd].request = "";
 					recvStrs[fd].body = "";
+					EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
+					if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+						Serv::err("kevent");
+					EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+					if (kevent(kq, &evSet, 1, NULL, 0, NULL) == -1)
+						Serv::err("kevent");
 				}
 			}
 			if (evList[i].filter == EVFILT_WRITE)
