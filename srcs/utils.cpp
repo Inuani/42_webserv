@@ -5,6 +5,7 @@
 #include "ContentTypes.hpp"
 #include "dirent.h"
 #include <stdio.h>
+#include <sstream>
 
 std::string readFileContent(const std::string& path) {
 	std::ifstream file(path, std::ios::binary);
@@ -51,8 +52,12 @@ int getResponseCode(const std::string& filePath)
 size_t getContentLen(const std::string& header)
 {
 	std::string len;
+	
+	int blablabla;
 	len = header.substr(header.find("Content-Length:") + 16, (header.find("\n", header.find("Content-Length:"))));
-	return (std::stoi(len));
+	std::istringstream oss(len);
+	oss >> blablabla;
+	return (blablabla);
 }
 
 const Location* findLocationByPath(const Settings& set, const std::string& path) {
@@ -111,7 +116,6 @@ const std::string	repertoryListing(const Settings& set, std::string directoryPat
 	DIR* 				dir;
 	struct dirent*		entry;
 
-	std::cout << "dirPath is : " << directoryPath << std::endl;
 	std::string urlStart = getURLStart(set, directoryPath);
 	if ((dir = opendir(directoryPath.c_str())) != NULL)
 	{
@@ -126,16 +130,13 @@ const std::string	repertoryListing(const Settings& set, std::string directoryPat
 		htmlFile << "</head><body>";
 		htmlFile << "<h1>Directory Listing</h1>";
 
-		// Iterate over the files and directories
 		while ((entry = readdir(dir)) != NULL)
 		{
 			std::string name = entry->d_name;
-			// Ignore hidden files and special directories (. and ..)
 			if (name[0] == '.') {
 				continue;
 			}
 			std::string link = name;
-			std::cout << "link is " << link << std::endl;
 			if (entry->d_type == DT_DIR) {
 				link += "/";
 			}
@@ -143,7 +144,6 @@ const std::string	repertoryListing(const Settings& set, std::string directoryPat
 		}
 		htmlFile << "</body></html>";
 		closedir(dir);
-		std::cout << "Directory listing generated successfully." << std::endl;
 	}
 	return (htmlFile.str());
 }

@@ -44,11 +44,9 @@ std::string ErrorHandler::getErrorFile()
 			return (defaultPath);
 		return ("");
 	}
-	std::cout << "looking for " << _strStatusCode << "in map" << std::endl;
 	std::map<std::string, std::string>::const_iterator it = _errorFileMap.find(_strStatusCode);
 	if (it != _errorFileMap.end())
 	{
-		std::cout << "file to use is : " << it->second << std::endl;
 		std::string path = findFileLocation(it->second);
 		if (access(path.c_str(), R_OK) == 0)
 			return (path);
@@ -62,7 +60,6 @@ std::string ErrorHandler::getErrorFile()
 void ErrorHandler::generateBody()
 {
 	std::string path = getErrorFile();
-	std::cout << "path is " << path << std::endl;
 	if (!path.empty())
 	{
 		readFile(_filedir + _filename);

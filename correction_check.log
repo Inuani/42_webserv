@@ -25,7 +25,7 @@ test the result:
 '1'• Search for the HTTP response status codes list on the internet. During this evaluation, if any status codes is
 wrong, don't give any related points.
 '1'• Setup multiple servers with different ports.
-0• Setup multiple servers with different hostnames (use something like: curl --resolve example.com:80:127.0.0.1
+'1'• Setup multiple servers with different hostnames (use something like: curl --resolve example.com:80:127.0.0.1
 http://example.com/ (http://example.com/)).
 '1'• Setup default error page (try to change the error 404).
 '1'• Limit the client body (use: curl -X POST -H "Content-Type: plain/text" --data "BODY IS HERE write something
@@ -39,8 +39,8 @@ shorter or longer than body limit").
 Basic checks
 Using telnet, curl, prepared files, demonstrate that the following
 features work properly:
-0• GET, POST and DELETE requests should work.
-0• UNKNOWN requests should not result in a crash.
+'1'• GET, POST and DELETE requests should work.
+'1'• UNKNOWN requests should not result in a crash.
 '1'• For every test you should receive the appropriate status code.
 '1'• Upload some file to the server and get it back.
 
@@ -60,13 +60,13 @@ The server should never crash and an error should be visible in case of a proble
 ----------------------------------------------------------------------------------------------------------------------------------
 
 Check with a browser
-0• Use the reference browser of the team. Open the network part of it, and try to connect to the server using it.
+'1'• Use the reference browser of the team. Open the network part of it, and try to connect to the server using it.
 '1'• Look at the request header and response header.
 '1'• It should be compatible to serve a fully static website.
 '1'• Try a wrong URL on the server.
 '1'• Try to list a directory.
 '1'• Try a redirected URL.
-0• Try anything you want to.
+'1'• Try anything you want to.
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -81,12 +81,9 @@ does, ask why the server should work if one of the configurations isn't function
 Siege & stress test
 Use Siege to run some stress tests.
 '1'• Availability should be above 99.5% for a simple GET on an empty page with a siege -b on that page.
-0• Verify there is no memory leak (Monitor the process memory usage. It should not go up indefinitely).
------ MEMORY LEAKS :
-    - handleDirListing (opendir)
-    - cgiHandler (strdup)
-0• Check if there is no hanging connection.
-0• You should be able to use siege indefinitely without having to restart the server (take a look at siege -b)
+'1'• Verify there is no memory leak (Monitor the process memory usage. It should not go up indefinitely).
+?0• Check if there is no hanging connection.
+'1'• You should be able to use siege indefinitely without having to restart the server (take a look at siege -b)
 
 ---------------------------------------------------------------BONUS--------------------------------------------------------------
 
