@@ -9,12 +9,10 @@
 
 std::string readFileContent(const std::string& path) {
 	std::ifstream file(path, std::ios::binary);
-	std::ifstream error404("www/html/404.html", std::ios::binary);
 	std::ostringstream ss;
 	if (!file.is_open()) 
 	{
 		std::cerr << "Failed to open file: " << path << '\n';
-		//ss << error404.rdbuf();
 		throw 404;
 	}
 	else
@@ -53,11 +51,11 @@ size_t getContentLen(const std::string& header)
 {
 	std::string len;
 	
-	int blablabla;
+	size_t contLen;
 	len = header.substr(header.find("Content-Length:") + 16, (header.find("\n", header.find("Content-Length:"))));
 	std::istringstream oss(len);
-	oss >> blablabla;
-	return (blablabla);
+	oss >> contLen;
+	return (contLen);
 }
 
 const Location* findLocationByPath(const Settings& set, const std::string& path) {
@@ -117,6 +115,8 @@ const std::string	repertoryListing(const Settings& set, std::string directoryPat
 	struct dirent*		entry;
 
 	std::string urlStart = getURLStart(set, directoryPath);
+	if (urlStart.back() != '/')
+		urlStart += "/";
 	if ((dir = opendir(directoryPath.c_str())) != NULL)
 	{
 		htmlFile << "<!DOCTYPE html>";

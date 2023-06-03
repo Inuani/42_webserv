@@ -36,10 +36,8 @@ void	HttpReqParsing::_splitUriWithLocations() {
 
 void HttpReqParsing::_parseHeader(const std::string& strHeader)
 {
-	std::cout << "??" << std::endl;
 	if (getContentLen(strHeader) > _settings.max_body)
 		throw 413;
-	std::cout << (getContentLen(strHeader) << _settings.max_body) << std::endl;
 	std::istringstream parseStream(strHeader);
 	std::string line;
 

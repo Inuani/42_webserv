@@ -298,8 +298,8 @@ const std::string	ReqHandler::handleRequest(const HttpReqParsing& request)
 	if (_fileName.find(".") != std::string::npos && (request.getfileExt() == "php" || request.getfileExt() == "py")) {
 		if (_reqLocation == NULL) 
 		{
-			// we must have a CGI ?
-			// use settings
+			if (_settings.methods.find(request.getMethod()) == std::string::npos)
+				throw 405;
 		}
 		else if (_reqLocation->methods.find(request.getMethod()) == std::string::npos)
 			throw 405;
@@ -334,7 +334,6 @@ std::string ReqHandler::_handleDirListing(std::string dirListing, std::string lo
 	{
 		if (dirListing == "on")
 		{
-			std::cout << "Full path given to replisting func : "<< _fullPath << std::endl;
 			const std::string dirContent = repertoryListing(_settings, _fullPath);
 			closedir(dirHandle);
 			if (!dirContent.empty())
