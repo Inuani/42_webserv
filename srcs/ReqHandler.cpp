@@ -133,8 +133,6 @@ void	ReqHandler::_setEnvCgi(const HttpReqParsing& request, std::string& serverPa
 	if (!cookies.empty()) {
 		env.push_back("HTTP_COOKIE=" + cookies);
 	}
-	std::cout << serverPath << " | " << _fileName << std::endl;
-	std::cout << _reqLocation->root << std::endl;
 }
 
 void	ReqHandler::_childCgi(int fd[2], const HttpReqParsing& request, std::vector<std::string>& env, char *args[]) {
