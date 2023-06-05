@@ -27,3 +27,9 @@ In order to compile and run this web server, you'll need the following:
 
 ```bash
 git clone https://github.com/yourusername/webserv.git
+
+2. Navigate into the project directory:
+
+```bash
+cd webserv
+
