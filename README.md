@@ -35,3 +35,28 @@ git clone https://github.com/yourusername/webserv.git
 cd webserv
 ```
 
+3. Build the web server using the Makefile:
+
+```bash
+make
+```
+
+## Usage
+
+To start the web server, run the compiled binary:
+
+```
+./webserv [config_file]
+```
+
+The config_file is optional and represents the path to the server configuration file. If not provided, the default configuration file config/webserv.conf will be used.
+
+Upon launching, the server will start listening for incoming connections on the specified port (default: 8080) as configured in the configuration file.
+
+## Configuration
+
+The server can be configured using a configuration file in INI format. The default configuration file is located at config/webserv.conf, but you can specify a different configuration file when starting the server.
+
+The configuration file consists of various settings, including the server port, document root, supported file types for static file serving, etc. The file is split into sections, each specifying a different aspect of the server's configuration.
+
+For reference, an example configuration file can be found in webserv.conf This example file provides an explanation for each available configuration option.
